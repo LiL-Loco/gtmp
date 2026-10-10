@@ -99,8 +99,7 @@ public sealed class ProtocolIntegrationTests
         foreach (var payload in creates)
         {
             var reader = new PacketReader(payload);
-            EntityMessages.ReadHandle(ref reader);
-            models.Add(reader.ReadString() ?? string.Empty);
+            models.Add(EntityMessages.ReadCreate(ref reader).Model);
         }
 
         Assert.Contains("adder", models);

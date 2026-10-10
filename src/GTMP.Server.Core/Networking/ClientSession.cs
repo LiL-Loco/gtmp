@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using GTMP.Shared.Protocol;
 
@@ -9,13 +9,16 @@ namespace GTMP.Server.Core.Networking;
 /// </summary>
 public sealed class ClientSession
 {
-    private static readonly TimeSpan HandshakeTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan DefaultHandshakeTimeout = TimeSpan.FromSeconds(10);
 
-    public ClientSession(IPEndPoint endPoint, long sessionId)
+    private readonly TimeSpan _timeout;
+
+    public ClientSession(IPEndPoint endPoint, long sessionId, TimeSpan? timeout = null)
     {
         EndPoint = endPoint;
         SessionId = sessionId;
         CreatedAt = DateTime.UtcNow;
+        _timeout = timeout ?? DefaultHandshakeTimeout;
     }
 
     public IPEndPoint EndPoint { get; }
@@ -40,7 +43,7 @@ public sealed class ClientSession
 
     public void Touch() => LastSeenAt = DateTime.UtcNow;
 
-    public bool IsTimedOut => DateTime.UtcNow - LastSeenAt > HandshakeTimeout;
+    public bool IsTimedOut => DateTime.UtcNow - LastSeenAt > _timeout;
 
     public override string ToString() => $"#{SessionId} {(IsHandshakeComplete ? Name : "<handshaking>")} @ {EndPoint}";
 }

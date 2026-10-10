@@ -1,5 +1,6 @@
-using GTMP.Server.Core;
+﻿using GTMP.Server.Core;
 using GTMP.Server.Core.Configuration;
+using GTMP.Server.Core.Networking;
 using GTMP.Server.Core.Runtime;
 using GTMP.Server.Core.Scripting;
 using GTMP.Scripting.Hosting;
@@ -14,22 +15,23 @@ namespace GTMP.Server.Tests;
 /// </summary>
 public sealed class ScriptIntegrationTests
 {
-    private static (ScriptTickService Scripts, ServerContext Context) CreateServer()
+    private static (ScriptTickService Scripts, ServerContext Context, NetworkService Network) CreateServer()
     {
-        var settings = new ServerSettings { TickRate = 20 };
+        var settings = new ServerSettings { TickRate = 20, Port = 0 };
         var context = new ServerContext(settings, new InMemoryLogger());
 
-        var natives = new ServerNatives(context);
+        var network = new NetworkService(context);
+        var natives = new ServerNatives(context, network);
         var engine = new ScriptEngine(natives.Registry);
         var scripts = new ScriptTickService(context, engine);
 
-        return (scripts, context);
+        return (scripts, context, network);
     }
 
     [Fact]
     public void OnScriptLoadCanSpawnEntitiesThroughNatives()
     {
-        var (scripts, context) = CreateServer();
+        var (scripts, context, _) = CreateServer();
         var folder = WriteScript("spawn.pwn", """
             OnScriptLoad()
             {
@@ -53,7 +55,7 @@ public sealed class ScriptIntegrationTests
     [Fact]
     public void GlobalsKeepStateAcrossTicks()
     {
-        var (scripts, _) = CreateServer();
+        var (scripts, _, _) = CreateServer();
         var folder = WriteScript("counter.pwn", """
             new calls = 0;
 
@@ -87,7 +89,7 @@ public sealed class ScriptIntegrationTests
     [Fact]
     public void ABrokenScriptIsReportedAndDoesNotStopTheServer()
     {
-        var (scripts, _) = CreateServer();
+        var (scripts, _, _) = CreateServer();
         var folder = WriteScript("broken.pwn", """
             OnTick(tick)
             {
@@ -108,7 +110,7 @@ public sealed class ScriptIntegrationTests
     [Fact]
     public void NativesValidateTheirArgumentsInsteadOfThrowing()
     {
-        var (scripts, _) = CreateServer();
+        var (scripts, _, _) = CreateServer();
         var folder = WriteScript("badargs.pwn", """
             OnTick(tick)
             {
@@ -128,7 +130,7 @@ public sealed class ScriptIntegrationTests
     [Fact]
     public void AnInfiniteLoopInAScriptIsStoppedByTheBudget()
     {
-        var (scripts, _) = CreateServer();
+        var (scripts, _, _) = CreateServer();
         var folder = WriteScript("hang.pwn", """
             OnTick(tick)
             {
@@ -152,7 +154,7 @@ public sealed class ScriptIntegrationTests
     [Fact]
     public void PlayerConnectReachesTheScriptWithTheAssignedHandle()
     {
-        var (scripts, context) = CreateServer();
+        var (scripts, context, _) = CreateServer();
         var folder = WriteScript("join.pwn", """
             new lastJoin = "";
 

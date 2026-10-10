@@ -38,10 +38,17 @@ public static class EntityMessages
     /// <summary>Hard cap on a player supplied name so a long name cannot exhaust a packet.</summary>
     public const int MaxNameByteCount = 48;
 
+    /// <summary>
+    /// A complete snapshot of one entity.
+    /// </summary>
+    /// <remarks>
+    /// The model is written exactly once, by <see cref="WriteCommonState"/> under
+    /// <see cref="EntityField.Model"/>. Writing it here as well produced two strings in
+    /// the stream, and the reader then consumed a float as a string length.
+    /// </remarks>
     public static void WriteCreate(PacketWriter writer, EntityProperties entity)
     {
         WriteHandle(writer, entity.Handle);
-        writer.WriteString(entity.Model);
         WriteCommonState(writer, entity, EntityField.All);
     }
 
@@ -150,6 +157,37 @@ public static class EntityMessages
 
         return NetHandle.Create(id, entityType, isPlayer);
     }
+
+    /// <summary>
+    /// Decodes a packet written by <see cref="WriteCreate"/> into a fresh entity.
+    /// </summary>
+    /// <remarks>
+    /// Encoding and decoding live side by side on purpose. When they were separate
+    /// implementations, a duplicated field on the write side went unnoticed until an
+    /// end to end test failed, because the low level tests never decoded the body.
+    /// </remarks>
+    public static EntityProperties ReadCreate(ref PacketReader reader)
+    {
+        var handle = ReadHandle(ref reader);
+
+        var entity = CreatePropertiesFor(handle);
+
+        // The freshly created properties start with a null handle. Without this line
+        // every decoded entity collapses onto handle id 0 and the last one wins.
+        entity.Handle = handle;
+
+        EntityUpdateApplier.Apply(ref reader, entity, EntityField.All);
+
+        return entity;
+    }
+
+    private static EntityProperties CreatePropertiesFor(NetHandle handle) => handle.EntityType switch
+    {
+        EntityType.Player => new PlayerProperties(),
+        EntityType.Vehicle => new VehicleProperties(),
+        EntityType.Ped => new PedProperties(),
+        _ => new EntityProperties()
+    };
 }
 
 /// <summary>Applies a decoded update onto a stored entity, guided by the transmitted mask.</summary>

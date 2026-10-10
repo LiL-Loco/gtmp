@@ -97,13 +97,13 @@ public sealed class ScriptTickService : IServerTick
         return true;
     }
 
-    /// <summary>Convenience hooks the network layer calls.</summary>
-    public void OnPlayerConnected(NetHandle handle, string name) =>
+    /// <summary>Convenience hooks the network layer call. Each returns whether a script handled it.</summary>
+    public bool OnPlayerConnected(NetHandle handle, string name) =>
         Invoke("OnPlayerConnect", [(double)handle.Id, name]);
 
-    public void OnPlayerDisconnected(NetHandle handle) =>
+    public bool OnPlayerDisconnected(NetHandle handle) =>
         Invoke("OnPlayerDisconnect", [(double)handle.Id]);
 
-    public void OnPlayerChat(NetHandle handle, string name, string text) =>
+    public bool OnPlayerChat(NetHandle handle, string name, string text) =>
         Invoke("OnPlayerChat", [(double)handle.Id, name, text]);
 }

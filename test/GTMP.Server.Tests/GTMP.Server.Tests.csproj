@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\GTMP.Shared\GTMP.Shared.csproj" />
     <ProjectReference Include="..\..\src\GTMP.Server.Core\GTMP.Server.Core.csproj" />
+    <ProjectReference Include="..\..\src\GTMP.Client\GTMP.Client.csproj" />
   </ItemGroup>
 
 </Project>

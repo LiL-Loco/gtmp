@@ -33,6 +33,12 @@ public sealed class ServerSettings
     /// </summary>
     public string ProtocolVersion { get; set; } = "0.1";
 
+    /// <summary>
+    /// How long a silent session is kept before it is treated as gone. UDP has no
+    /// disconnect packet, so this is the only way a crashed client is ever reaped.
+    /// </summary>
+    public int SessionTimeoutSeconds { get; set; } = 10;
+
     public bool AnnounceToMasterServer { get; set; }
 
     public string MasterServerUrl { get; set; } = string.Empty;
@@ -47,6 +53,9 @@ public sealed class ServerSettings
 
         if (MaxPlayers < 1)
             throw new InvalidOperationException("MaxPlayers must be at least 1.");
+
+        if (SessionTimeoutSeconds is < 1 or > 600)
+            throw new InvalidOperationException("SessionTimeoutSeconds must be between 1 and 600.");
 
         if (AnnounceToMasterServer && string.IsNullOrWhiteSpace(MasterServerUrl))
             throw new InvalidOperationException("MasterServerUrl must be set when AnnounceToMasterServer is enabled.");

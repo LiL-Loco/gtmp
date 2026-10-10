@@ -21,6 +21,18 @@ internal sealed class ServerHarness : IDisposable
     private readonly EntityReplicationService _replication;
     private readonly TickLoop _tickLoop;
 
+    /// <summary>
+    /// Serialises manual and background ticks. The real server runs one tick thread,
+    /// so the harness must not run two at once or the tests would exercise a
+    /// concurrency model that does not exist in production.
+    /// </summary>
+    private readonly object _tickGate = new();
+
+    private const int BackgroundTickMs = 20;
+
+    private readonly CancellationTokenSource _shutdown = new();
+    private Thread? _ticker;
+
     private ServerHarness(
         ServerSettings settings,
         ServerContext context,
@@ -39,6 +51,8 @@ internal sealed class ServerHarness : IDisposable
 
     public ServerContext Context { get; }
 
+    public InMemoryLogger Log { get; init; } = new();
+
     public NetworkService Network => _network;
 
     public int Port => Settings.Port;
@@ -47,7 +61,7 @@ internal sealed class ServerHarness : IDisposable
     /// Finds a free UDP port. There is a small race between releasing it here and
     /// binding it in the server, which is acceptable for a loopback test run.
     /// </summary>
-    public static ServerHarness Start(string password = "")
+    public static ServerHarness Start(string password = "", int sessionTimeoutSeconds = 5)
     {
         var settings = new ServerSettings
         {
@@ -55,10 +69,12 @@ internal sealed class ServerHarness : IDisposable
             Password = password,
             TickRate = 20,
             MaxPlayers = 8,
-            ServerName = "Test Server"
+            ServerName = "Test Server",
+            SessionTimeoutSeconds = sessionTimeoutSeconds
         };
 
-        var context = new ServerContext(settings, new InMemoryLogger());
+        var log = new InMemoryLogger();
+        var context = new ServerContext(settings, log);
         var network = new NetworkService(context);
         var replication = new EntityReplicationService(context, network);
         network.SetFullSyncHandler(replication.SendFullSyncTo);
@@ -74,24 +90,63 @@ internal sealed class ServerHarness : IDisposable
 
         network.Start();
 
-        return new ServerHarness(settings, context, network, replication, tickLoop);
+        // Mirrors the production wiring in the host, otherwise the tests would prove a
+        // chat flow that only exists in the test setup.
+        network.PlayerChat += (session, text) => network.BroadcastChat(session.PlayerHandle, session.Name, text);
+
+        var harness = new ServerHarness(settings, context, network, replication, tickLoop) { Log = log };
+        harness.StartBackgroundTicks();
+
+        return harness;
     }
 
-    /// <summary>Advances the server by <paramref name="count"/> ticks.</summary>
+    /// <summary>
+    /// Runs the tick loop on its own thread, exactly like the real server, so tests
+    /// exercise the real timing path instead of a hand driven approximation.
+    /// </summary>
+    private void StartBackgroundTicks()
+    {
+        _ticker = new Thread(() =>
+        {
+            while (!_shutdown.IsCancellationRequested)
+            {
+                lock (_tickGate) _tickLoop.StepOnce();
+
+                if (_shutdown.Token.WaitHandle.WaitOne(BackgroundTickMs)) return;
+            }
+        })
+        { IsBackground = true, Name = "test ticker" };
+
+        _ticker.Start();
+    }
+
+    /// <summary>Advances the server by <paramref name="count"/> extra ticks.</summary>
     public (int UpdatesSent, int DeletesSent) RunTicks(int count)
     {
         var updatesBefore = _replication.UpdatesSent;
         var deletesBefore = _replication.DeletesSent;
 
-        for (var i = 0; i < count; i++) _tickLoop.StepOnce();
+        for (var i = 0; i < count; i++)
+        {
+            lock (_tickGate) _tickLoop.StepOnce();
+        }
 
         return (_replication.UpdatesSent - updatesBefore, _replication.DeletesSent - deletesBefore);
     }
 
     /// <summary>Advances the server by a single tick, for use while a test is waiting.</summary>
-    public void PumpOnce() => _tickLoop.StepOnce();
+    public void PumpOnce()
+    {
+        lock (_tickGate) _tickLoop.StepOnce();
+    }
 
-    public void Dispose() => _network.Dispose();
+    public void Dispose()
+    {
+        _shutdown.Cancel();
+        _ticker?.Join(TimeSpan.FromSeconds(2));
+        _network.Dispose();
+        _shutdown.Dispose();
+    }
 
     private static int FindFreeUdpPort()
     {

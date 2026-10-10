@@ -15,11 +15,13 @@ namespace GTMP.Server.Core.Scripting;
 public sealed class ServerNatives
 {
     private readonly ServerContext _context;
+    private readonly Networking.NetworkService _network;
     private readonly NativeFunctionRegistry _registry = new();
 
-    public ServerNatives(ServerContext context)
+    public ServerNatives(ServerContext context, Networking.NetworkService network)
     {
         _context = context;
+        _network = network;
         Register();
     }
 
@@ -110,7 +112,21 @@ public sealed class ServerNatives
         // --- world --------------------------------------------------------------
         _registry.Register("BroadcastChat", 2, args =>
         {
-            _context.Logger.Info($"[script] broadcast: {ToString(args[1])}");
+            var text = ToString(args[1]);
+
+            _network.BroadcastChat(default, string.Empty, text);
+            _context.Logger.Info($"[chat] {text}");
+            return true;
+        });
+
+        _registry.Register("SendPlayerMessage", 2, args =>
+        {
+            var session = _network.HandshakeCompletedSessions()
+                .FirstOrDefault(s => s.PlayerHandle.Id == ToHandleId(args[0]));
+
+            if (session is null) return false;
+
+            _network.SendChatTo(session, session.PlayerHandle, session.Name, ToString(args[1]));
             return true;
         });
 

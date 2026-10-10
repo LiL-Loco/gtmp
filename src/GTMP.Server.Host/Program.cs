@@ -42,16 +42,24 @@ internal static class Program
 
         var context = new ServerContext(settings, logger);
 
-        var natives = new ServerNatives(context);
-        var scriptEngine = new ScriptEngine(natives.Registry);
-        var scripts = new ScriptTickService(context, scriptEngine);
-
         var network = new NetworkService(context);
         var replication = new EntityReplicationService(context, network);
         network.SetFullSyncHandler(replication.SendFullSyncTo);
 
+        var natives = new ServerNatives(context, network);
+        var scriptEngine = new ScriptEngine(natives.Registry);
+        var scripts = new ScriptTickService(context, scriptEngine);
+
         network.PlayerConnected += session => scripts.OnPlayerConnected(session.PlayerHandle, session.Name);
         network.PlayerDisconnected += session => scripts.OnPlayerDisconnected(session.PlayerHandle);
+
+        // Player chat reaches the script first; the default behaviour is to pass it on,
+        // so a game mode that does not care about chat still behaves like a chat server.
+        network.PlayerChat += (session, text) =>
+        {
+            if (!scripts.OnPlayerChat(session.PlayerHandle, session.Name, text))
+                network.BroadcastChat(session.PlayerHandle, session.Name, text);
+        };
 
         var resourceFolder = Path.Combine(baseDirectory, settings.ResourceFolder);
         var loadedScripts = scripts.LoadResourceFolder(resourceFolder);

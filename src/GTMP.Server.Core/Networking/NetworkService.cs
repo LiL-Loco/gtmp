@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Net;
 using GTMP.Shared;
 using GTMP.Shared.Protocol;
@@ -17,15 +17,19 @@ public sealed class NetworkService : IDisposable
 {
     private readonly ServerContext _context;
     private readonly UdpServer _udpServer;
+    private const int MaxChatByteCount = 240;
+
     private readonly ConcurrentDictionary<long, ClientSession> _sessions = new();
     private readonly ConcurrentQueue<InboundPacket> _inbound = new();
 
     private long _nextSessionId;
+    private readonly TimeSpan _sessionTimeout;
     private bool _acceptingConnections = true;
 
     public NetworkService(ServerContext context)
     {
         _context = context;
+        _sessionTimeout = TimeSpan.FromSeconds(context.Settings.SessionTimeoutSeconds);
         _udpServer = new UdpServer(OnDatagram, (message, exception) => _context.Logger.Error(message, exception));
     }
 
@@ -35,6 +39,9 @@ public sealed class NetworkService : IDisposable
     public event Action<ClientSession>? PlayerConnected;
 
     public event Action<ClientSession>? PlayerDisconnected;
+
+    /// <summary>Raised when a player sends chat, so the scripting layer can react.</summary>
+    public event Action<ClientSession, string>? PlayerChat;
 
     public int SessionCount => _sessions.Count;
 
@@ -211,17 +218,32 @@ public sealed class NetworkService : IDisposable
         var reader = new PacketReader(payload.Span);
         var text = reader.ReadString() ?? string.Empty;
 
-        BroadcastChat(session.PlayerHandle, session.Name, text);
+        // Scripts decide whether the message is broadcast, filtered or dropped.
+        PlayerChat?.Invoke(session, text);
+    }
+
+    public void SendChatTo(ClientSession session, NetHandle sender, string senderName, string text)
+    {
+        var payload = BuildChatPayload(sender, senderName, text);
+
+        Send(session, PacketChannel.Event, PacketType.ChatMessage, payload);
     }
 
     public void BroadcastChat(NetHandle sender, string senderName, string text)
     {
+        var payload = BuildChatPayload(sender, senderName, text);
+
+        Broadcast(PacketChannel.Event, PacketType.ChatMessage, payload);
+    }
+
+    private static byte[] BuildChatPayload(NetHandle sender, string senderName, string text)
+    {
         var writer = new PacketWriter();
         writer.WriteUInt16(sender.Id);
         writer.WriteString(senderName, EntityMessages.MaxNameByteCount);
-        writer.WriteString(text, 240);
+        writer.WriteString(text, MaxChatByteCount);
 
-        Broadcast(PacketChannel.Event, PacketType.ChatMessage, writer.Span);
+        return writer.Span.ToArray();
     }
 
     /// <summary>
@@ -295,7 +317,7 @@ public sealed class NetworkService : IDisposable
 
         // Unknown peer: create a session so the handshake can be answered. It only
         // becomes a player once the handshake succeeds.
-        var created = new ClientSession(endPoint, Interlocked.Increment(ref _nextSessionId));
+        var created = new ClientSession(endPoint, Interlocked.Increment(ref _nextSessionId), _sessionTimeout);
         _sessions[created.SessionId] = created;
         return created.SessionId;
     }

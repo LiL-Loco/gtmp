@@ -35,7 +35,7 @@ OnPlayerConnect(playerId, name)
     Log(name + " joined (connection #" + joinCount + ")");
 
     GivePlayerMoney(playerId, 5000);
-    BroadcastChat("Welcome, " + name + "!");
+    SendPlayerMessage(playerId, "Welcome, " + name + "!");
 
     return true;
 }
@@ -49,5 +49,10 @@ OnPlayerDisconnect(playerId)
 OnPlayerChat(playerId, name, text)
 {
     Log(name + ": " + text);
-    return true;
+
+    // Returning true marks the message as handled. Returning false lets the
+    // server forward it to everybody else, which is the usual chat behaviour.
+    BroadcastChat(playerId, text);
+
+    return false;
 }
