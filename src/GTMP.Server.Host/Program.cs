@@ -1,6 +1,8 @@
-﻿using System.Text.Json;
+﻿using System.Net.Sockets;
+using System.Text.Json;
 using GTMP.Server.Core;
 using GTMP.Server.Core.Configuration;
+using GTMP.Server.Core.Networking;
 using GTMP.Server.Core.Runtime;
 
 namespace GTMP.Server.Host;
@@ -38,13 +40,19 @@ internal static class Program
 
         var context = new ServerContext(settings, logger);
 
+        var network = new NetworkService(context);
+        var replication = new EntityReplicationService(context, network);
+        network.SetFullSyncHandler(replication.SendFullSyncTo);
+
         var tickLoop = new TickLoop
         {
             Settings = settings,
             ShouldContinue = () => !_shutdownRequested
         };
 
-        tickLoop.Register(new HeartbeatTick(context));
+        tickLoop.Register(new PumpInboundTick(network));
+        tickLoop.Register(replication);
+        tickLoop.Register(new HeartbeatTick(context, network, replication));
 
         // Ctrl+C has to be handled before the loop starts, otherwise a long blocking
         // sleep swallows the signal and the server looks hung.
@@ -57,7 +65,17 @@ internal static class Program
             shutdownSignal.Set();
         };
 
-        logger.Info($"{settings.ServerName} starting on port {settings.Port} ({settings.TicksPerSecond} ticks/s).");
+        try
+        {
+            network.Start();
+        }
+        catch (SocketException exception)
+        {
+            logger.Error($"Could not bind UDP port {settings.Port}. Is another instance running?", exception);
+            return 1;
+        }
+
+        logger.Info($"{settings.ServerName} listening on UDP {settings.Port} ({settings.TicksPerSecond} ticks/s).");
 
         var loopTask = Task.Run(() => tickLoop.Run());
 
@@ -82,8 +100,17 @@ internal static class Program
 
         logger.Info($"Stopped after {context.Uptime.TotalSeconds:F0}s and {tickLoop.TickNumber} ticks.");
         logger.Info($"{context.Entities.Count} entities, {context.PlayerCount} players.");
+        logger.Info($"Replicated {replication.UpdatesSent} updates and {replication.DeletesSent} deletes.");
+
+        network.Dispose();
 
         return 0;
+    }
+
+    /// <summary>Drains the receive queue on the tick thread.</summary>
+    private sealed class PumpInboundTick(NetworkService network) : IServerTick
+    {
+        public void Tick(long tickNumber) => network.PumpInbound();
     }
 
     private static ServerSettings LoadSettings(string baseDirectory)
@@ -103,7 +130,10 @@ internal static class Program
     }
 
     /// <summary>Writes a periodic status line so the process is observably alive.</summary>
-    private sealed class HeartbeatTick(ServerContext context) : IServerTick
+    private sealed class HeartbeatTick(
+        ServerContext context,
+        NetworkService network,
+        EntityReplicationService replication) : IServerTick
     {
         private const int ReportEveryTicks = 200;
 
@@ -115,7 +145,9 @@ internal static class Program
 
             context.Logger.Info(
                 $"tick {tickNumber} | uptime {context.Uptime.TotalSeconds:F0}s | " +
-                $"players {context.PlayerCount} | entities {context.Entities.Count}");
+                $"players {context.PlayerCount} | entities {context.Entities.Count} | " +
+                $"sessions {network.SessionCount} | drops {network.DroppedPackets} | " +
+                $"repl {replication.UpdatesSent}u/{replication.DeletesSent}d");
         }
     }
 }

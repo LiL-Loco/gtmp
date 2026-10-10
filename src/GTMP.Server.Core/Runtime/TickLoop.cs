@@ -67,6 +67,15 @@ public sealed class TickLoop
         IsRunning = false;
     }
 
+    /// <summary>
+    /// Runs exactly one tick without any timing. Used by tests and by a
+    /// manually driven server; the normal path is <see cref="Run"/>.
+    /// </summary>
+    public void StepOnce()
+    {
+        RunSingleTick();
+    }
+
     private void RunSingleTick()
     {
         TickNumber++;
