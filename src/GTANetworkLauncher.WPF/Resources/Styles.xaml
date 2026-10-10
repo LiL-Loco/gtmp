@@ -146,7 +146,11 @@
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="true">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentColor4}" />
+                            <!-- AccentColorBrush4, not AccentColor4: the latter is a
+                                 Color, and assigning one to Background throws
+                                 InvalidOperationException at render time - it only
+                                 surfaced when a row was actually selected. -->
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentColorBrush4}" />
                             <Setter TargetName="SelectionEdge" Property="Background" Value="{DynamicResource AccentInteractiveBrush}" />
                         </Trigger>
                         <MultiTrigger>
@@ -162,7 +166,7 @@
                                 <Condition Property="IsSelected" Value="True" />
                             </MultiTrigger.Conditions>
                             <MultiTrigger.Setters>
-                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceColor}" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceBrush}" />
                             </MultiTrigger.Setters>
                         </MultiTrigger>
                     </ControlTemplate.Triggers>

@@ -164,6 +164,7 @@
     <Compile Include="Helpers\EnumerationMarkupExtension.cs" />
     <Compile Include="Helpers\FileOperationsHelper.cs" />
     <Compile Include="Helpers\FileHashHelper.cs" />
+    <Compile Include="Helpers\GtaExecutableLocator.cs" />
     <Compile Include="Helpers\GridViewSort.cs" />
     <Compile Include="Helpers\HttpClientDownloadWithProgress.cs" />
     <Compile Include="Helpers\HttpClientProvider.cs" />

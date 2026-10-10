@@ -88,17 +88,25 @@ namespace GrandTheftMultiplayer.Launcher.Helpers
 
 		public static string BrowseForGta5Exe()
 		{
+			// The filter had to cover both editions. GTA5_Enhanced_BE.exe is left out
+			// on purpose - that is the Rockstar bootstrapper, not the game.
+			var filter = string.Join("|",
+				Constants.GtaExecutableFileNames.Select(name => name + "|" + name + "|*.exe"));
+
 			var openFileDialog = new OpenFileDialog
 			{
-				Filter = $"{Constants.GTA5ExecutableFileName}|{Constants.GTA5ExecutableFileName}",
-				FileName = Constants.GTA5ExecutableFileName,
+				Filter = filter,
 				DefaultExt = ".exe",
 				CheckFileExists = true,
 				CheckPathExists = true,
 				InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)
 			};
 
-			return openFileDialog.ShowDialog() != true ? null : openFileDialog.FileName;
+			var selected = openFileDialog.ShowDialog() != true ? null : openFileDialog.FileName;
+
+			// Cancel returns null; a wrong file still gets passed on so the caller
+			// can log what was chosen and say why it was rejected.
+			return selected;
 		}
 
 		public static string BrowseForGtMpServerExe()

@@ -21,6 +21,34 @@ namespace GrandTheftMultiplayer.Launcher.Services
 
 		// Generic
 		public const string GTA5ExecutableFileName = "GTA5.exe";
+
+		/// <summary>
+		/// Executable names GTA V ships under, in the order they are probed.
+		/// </summary>
+		/// <remarks>
+		/// Rockstar ships two editions with different executable names. The legacy
+		/// build is GTA5.exe; the Enhanced edition is GTA5_Enhanced.exe and lives in a
+		/// "Grand Theft Auto V Enhanced" folder. The launcher previously hardcoded
+		/// GTA5.exe in five places, so an Enhanced-only installation was reported as
+		/// "Selected path is invalid" no matter what the user picked.
+		/// <para>
+		/// GTA5_Enhanced_BE.exe is deliberately absent: that is the Rockstar
+		/// bootstrapper, not the game.
+		/// </para>
+		/// </remarks>
+		public static readonly string[] GtaExecutableFileNames =
+		{
+			GTA5ExecutableFileName,
+			"GTA5_Enhanced.exe"
+		};
+
+		/// <summary>Folder names GTA V is installed into, legacy first.</summary>
+		public static readonly string[] GtaInstallFolderNames =
+		{
+			"Grand Theft Auto V",
+			"Grand Theft Auto V Enhanced"
+		};
+
 		public const string SteamApiDllFileName = "steam_api64.dll";
 		public const string ServerExeFileName = "GrandTheftMultiplayer.Server.exe";
 		public const string ForumsApiKey = "LAUNCHER_NEWS_API_KEY";

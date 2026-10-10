@@ -8,10 +8,41 @@ namespace GrandTheftMultiplayer.Launcher.Models.GameLauncherService
 {
     public class GameSettings
     {
+        /// <summary>
+        /// Path of GTA's <c>settings.xml</c> under Documents.
+        /// </summary>
+        /// <remarks>
+        /// Rockstar names this folder differently per edition: "GTA V" for the
+        /// legacy build, "GTAV Enhanced" for the Enhanced one. The path was
+        /// hardcoded twice - once for reading, once for writing - so an Enhanced
+        /// install made SaveSettings throw DirectoryNotFoundException after the
+        /// profile had already been patched. Existing files win; only when
+        /// neither folder has one is the Enhanced path used for a fresh write.
+        /// </remarks>
+        public static string GetSettingsFilePath()
+        {
+            var rockstarGamesFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments,
+                    Environment.SpecialFolderOption.Create),
+                "Rockstar Games");
+
+            var legacyPath = Path.Combine(rockstarGamesFolder, @"GTA V\settings.xml");
+            if (File.Exists(legacyPath)) return legacyPath;
+
+            var enhancedPath = Path.Combine(rockstarGamesFolder, @"GTAV Enhanced\settings.xml");
+            if (File.Exists(enhancedPath)) return enhancedPath;
+
+            // Nothing on disk yet. Prefer whichever folder the profiles live in,
+            // so a first save lands next to the profile it belongs to.
+            var enhancedProfiles = Path.Combine(rockstarGamesFolder, @"GTAV Enhanced\Profiles");
+            if (Directory.Exists(enhancedProfiles)) return enhancedPath;
+
+            return legacyPath;
+        }
+
         public static Settings LoadGameSettings()
         {
-            var filePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments,
-                Environment.SpecialFolderOption.Create) + "\\Rockstar Games\\GTA V\\settings.xml";
+            var filePath = GetSettingsFilePath();
             if (!File.Exists(filePath)) return new Settings();
 
             using (var stream = File.OpenRead(filePath))
@@ -24,8 +55,15 @@ namespace GrandTheftMultiplayer.Launcher.Models.GameLauncherService
 
         public static void SaveSettings(Settings sets)
         {
-            var filePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments,
-                Environment.SpecialFolderOption.Create) + "\\Rockstar Games\\GTA V\\settings.xml";
+            var filePath = GetSettingsFilePath();
+
+            // The target folder may not exist yet on a first run.
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
             using (var stream = new FileStream(filePath, File.Exists(filePath) ? FileMode.Truncate : FileMode.CreateNew)
                 )
             {

@@ -42,6 +42,18 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 			{
 				return await GetSupportedGtaVersionFromApi();
 			}
+			catch (RemoteFileNotFoundException ex)
+			{
+				// The master answered and publishes no game version for this channel.
+				// That is a deployment gap, not a failure: the caller treats a null
+				// result as "no answer, carry on", so logging a full HttpRequestException
+				// stack here only buried the real reason among network noise.
+				_logger.Write(
+					$"Master server publishes no game version ({ex.Url}). Skipping the version comparison.",
+					LogMessageSeverity.Warning);
+
+				return null;
+			}
 			catch (Exception ex)
 			{
 				_logger.Write(ex);
@@ -59,7 +71,11 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 		private string GetGta5ExecutablePath()
 		{
 		    var gamePath = _settingsProvider.GetCurrentSettings().GamePath;
-		    return string.IsNullOrEmpty(gamePath) ? null : Path.Combine(gamePath, Constants.GTA5ExecutableFileName);
+
+		    // Resolves GTA5.exe and GTA5_Enhanced.exe alike; returns null when the
+		    // folder holds neither, which the caller reports as a missing game
+		    // rather than throwing on a non-existent file.
+		    return GtaExecutableLocator.FindExecutable(gamePath);
 		}
 	}
 }

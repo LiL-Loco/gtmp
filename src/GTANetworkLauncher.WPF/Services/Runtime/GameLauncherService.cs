@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -342,16 +342,60 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 				return;
 			}
 
-			var gtavExePath = Path.Combine(gamePath, Constants.GTA5ExecutableFileName);
+			var gtavExePath = GtaExecutableLocator.FindExecutable(gamePath);
 
-			_logger.Write($"Reading GTA5.exe to determine launch method: {gtavExePath}");
+			if (gtavExePath == null)
+			{
+				_logger.Write($"No GTA V executable found in {gamePath}.", LogMessageSeverity.Error);
+				_notificationService.ShowNotification("The GTA V executable could not be found in the configured folder.", true);
+				return;
+			}
 
-            // Ommitted code to detect Steam/RockStar Warehouse version
-		    var isSteamVersion = true;
+			_logger.Write($"Reading {Path.GetFileName(gtavExePath)} to determine launch method: {gtavExePath}");
+
+			// The released source shipped this as a hardcoded `true` with the note
+			// "Ommitted code to detect Steam/RockStar Warehouse version". That made
+			// every Rockstar installation open Steam, which then offered to download a
+			// game that is already installed on disk.
+			//
+			// The distribution marker is authoritative and unambiguous: a Steam build
+			// ships steam_api64.dll next to the executable, a Rockstar build does not
+			// and has PlayGTAV.exe instead. GameBackupService already used the same
+			// test, so this reuses that convention rather than inventing a new one.
+			var isSteamVersion = File.Exists(Path.Combine(gamePath, Constants.SteamApiDllFileName));
 
 			_logger.Write($"DRM ID value detected. Is steam version: {isSteamVersion}");
 
-			Process.Start(isSteamVersion ? "steam://run/271590" : launcherPath);
+			if (isSteamVersion)
+			{
+				_logger.Write("Starting via steam://run/271590");
+				Process.Start("steam://run/271590");
+				return;
+			}
+
+			// Rockstar builds go through PlayGTAV.exe, which carries Social Club
+			// authentication and the -scOfflineOnly parameter the launcher sets up
+			// earlier. GTAVLauncher.exe only exists on the legacy Rockstar build.
+			var socialClubLauncher = Path.Combine(gamePath, "PlayGTAV.exe");
+
+			if (File.Exists(socialClubLauncher))
+			{
+				_logger.Write($"Starting Rockstar build via {socialClubLauncher}");
+				Process.Start(socialClubLauncher);
+				return;
+			}
+
+			if (File.Exists(launcherPath))
+			{
+				_logger.Write($"Starting legacy Rockstar build via {launcherPath}");
+				Process.Start(launcherPath);
+				return;
+			}
+
+			_logger.Write($"Neither PlayGTAV.exe nor GTAVLauncher.exe found in {gamePath}.", LogMessageSeverity.Error);
+			_notificationService.ShowNotification(
+				"Neither PlayGTAV.exe nor GTAVLauncher.exe was found in the GTA V folder.",
+				true);
 		}
         
 		private bool PatchStartup()
@@ -440,8 +484,11 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 
 		private static string GetGameSettingsFilePath()
 		{
-			return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments,
-					Environment.SpecialFolderOption.Create) + @"\Rockstar Games\GTA V\settings.xml";
+			// Delegates to GameSettings so the backup targets exactly the file the
+			// settings are written to. This was a second hardcoded "GTA V" path: on an
+			// Enhanced install the backup silently went to a path the game never
+			// reads, so a restore would have had nothing to work with.
+			return Models.GameLauncherService.GameSettings.GetSettingsFilePath();
 		}
 
 		/// <summary>
@@ -527,12 +574,39 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 			}
 		}
 
-		private static string[] GetProfilePaths()
+		// Not static: it logs which profile folder was used. Making it static would
+		// require a static logger, which this class does not have.
+		private string[] GetProfilePaths()
 		{
-			var profilesFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), @"Rockstar Games\GTA V\Profiles");
-			var pcSettingsFilePaths = Directory.Exists(profilesFolderPath) ? Directory.GetFiles(profilesFolderPath, PcSettingsFileName, SearchOption.AllDirectories) : null;
+			var rockstarGamesFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Rockstar Games");
 
-			return pcSettingsFilePaths?.Select(Path.GetDirectoryName).ToArray();
+			// Rockstar names the profile folder differently per edition: "GTA V" for
+			// the legacy build, "GTAV Enhanced" (no space, no second capital V) for
+			// the Enhanced one. Probing only "GTA V" made an Enhanced install look
+			// like it had never been started, and the launcher then refused to launch
+			// with a message telling the user to run single player first.
+			var profileFolders = new[]
+			{
+				Path.Combine(rockstarGamesFolder, @"GTA V\Profiles"),
+				Path.Combine(rockstarGamesFolder, @"GTAV Enhanced\Profiles")
+			};
+
+			var profileDirectories = new List<string>();
+
+			foreach (var profilesFolderPath in profileFolders)
+			{
+				if (!Directory.Exists(profilesFolderPath)) continue;
+
+				var found = Directory.GetFiles(profilesFolderPath, PcSettingsFileName, SearchOption.AllDirectories);
+
+				if (found.Length == 0) continue;
+
+				_logger.Write($"Using GTA profiles at {profilesFolderPath}");
+
+				profileDirectories.AddRange(found.Select(Path.GetDirectoryName));
+			}
+
+			return profileDirectories.Count == 0 ? null : profileDirectories.ToArray();
 		}
 
 		private bool ApplyFixedSaveGame()
@@ -543,8 +617,14 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 
 			if (profilePaths == null || profilePaths.Length < 1)
 			{
+				// Not a bug: the launcher copies a prepared savegame into the GTA
+				// profile folder, and that folder only exists once the game has run.
+				// The message says so without the typo the released build shipped
+				// ("Pleas"), which read like an error rather than an instruction.
 				_logger.Write("No profile paths detected.", LogMessageSeverity.Warning);
-				MessageBox.Show("GTA 5 must have launched into single player at last once. Pleas do so, before launching GT-MP.");
+				MessageBox.Show(
+					"GT-MP needs your GTA 5 profile.\n\n" +
+					"Start GTA 5 once in single player, then close it and press LAUNCH again.");
 				return false;
 			}
 
@@ -673,7 +753,10 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 
 			if (supportedGameVersion == null)
 			{
-				_notificationService.ShowNotification("Failed to get supported GTA version.", true);
+				// Not an error: the caller already continues when the master does not
+				// publish a game version. A warning, because the user then has no
+				// guarantee that their GTA version is the supported one.
+				_logger.Write("Master server publishes no supported GTA version. Skipping the check.", LogMessageSeverity.Warning);
 				return true;
 			}
 

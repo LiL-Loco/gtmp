@@ -41,7 +41,7 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 				return _settings.GamePath;
 			}
 
-			MessageBox.Show($"Failed to find {Constants.GTA5ExecutableFileName}. Please select it after pressing OK.");
+			MessageBox.Show($"Failed to find {string.Join(" or ", Constants.GtaExecutableFileNames)}. Please select it after pressing OK.");
 
 			while (true)
 			{
@@ -62,7 +62,7 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 		{
 			var selectedFile = FileOperationsHelper.BrowseForGta5Exe();
 
-		    _logger.Write($"User manually selected {selectedFile} as GTA5.exe path.");
+		    _logger.Write($"User manually selected {selectedFile} as the GTA V executable path.");
 
             var selectedFolder = string.IsNullOrEmpty(selectedFile) ? null : Path.GetDirectoryName(selectedFile);
 
@@ -70,16 +70,17 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 
 			_settings.GamePath = selectedFolder;
 			_settingsProvider.SaveSettings(_settings);
-			return selectedFile;
+
+			// Return the executable that actually exists in the folder rather than
+			// what was double-clicked. Selecting the bootstrapper
+			// (GTA5_Enhanced_BE.exe) still resolves to the real game binary, so the
+			// launch does not fail later on a file it cannot use.
+			return GtaExecutableLocator.FindExecutable(selectedFolder);
 		}
 
 		private static bool IsValidGtaPath(string path)
 		{
-			if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
-				return false;
-
-			var exePath = Path.Combine(path, Constants.GTA5ExecutableFileName);
-			return File.Exists(exePath);
+			return GtaExecutableLocator.IsGtaDirectory(path);
 		}
 
 		private string TryFindGtaPath()
@@ -109,14 +110,35 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 			if (IsValidGtaPath(fullInstallPath))
 				return fullInstallPath;
 
-			// R* Warehouse
-			const string rockstarInstallRegistryPath = @"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Rockstar Games\Grand Theft Auto V";
-			const string rockstarInstallValueName = "InstallFolder";
+			// R* Warehouse. The Enhanced edition registers under its own key and
+			// reports the folder that already ends in "Enhanced", so the value is
+			// used as-is here - stripping "\GTAV" would break it.
+			const string rockstarRegistryRoot = @"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Rockstar Games";
 
-			var rockstarInstallPath = Registry.GetValue(rockstarInstallRegistryPath, rockstarInstallValueName, null) as string ?? "";
-			fullInstallPath = rockstarInstallPath;
+			foreach (var keyName in new[]
+			{
+				@"Grand Theft Auto V",
+				@"Grand Theft Auto V Enhanced"
+			})
+			{
+				var installPath = Registry.GetValue(
+					rockstarRegistryRoot + "\\" + keyName,
+					"InstallFolder",
+					null) as string ?? "";
 
-			return IsValidGtaPath(fullInstallPath) ? fullInstallPath : null;
+				if (IsValidGtaPath(installPath))
+					return installPath;
+			}
+
+			// Fallback: probe the fixed install locations. Rockstar does not always
+			// write the registry key, for example on a fresh Enhanced-only install.
+			foreach (var candidate in GtaExecutableLocator.CandidateDirectories())
+			{
+				if (IsValidGtaPath(candidate))
+					return candidate;
+			}
+
+			return null;
 		}
 	}
 }

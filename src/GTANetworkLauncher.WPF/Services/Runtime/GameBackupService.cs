@@ -162,19 +162,28 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
         private string[] GetRelativeBackupFilePaths()
 		{
 			const string updateRpfPath = "update/update.rpf";
-			const string gta5ExecutablePath = Constants.GTA5ExecutableFileName;
 			const string gta5LauncherExecutablePath = "GTAVLauncher.exe";
-			
+
 			var relativeFilePaths = new List<string>
 			{
-				updateRpfPath,
-				gta5ExecutablePath,
-				gta5LauncherExecutablePath
+				updateRpfPath
 			};
+
+			// The game executable differs per edition. Hardcoding GTA5.exe here meant
+			// the Enhanced installation was backed up without its binary, so the
+			// restore could not undo a launcher-patched start.
+			var gameExecutable = GtaExecutableLocator.FindExecutable(_gamePath);
+
+			if (gameExecutable != null)
+			{
+				relativeFilePaths.Add(Path.GetFileName(gameExecutable));
+			}
+
+			relativeFilePaths.Add(gta5LauncherExecutablePath);
 
 			const string socialClubLauncherExecutablePath = "PlayGTA5.exe";
 			const string steamApiDllPath = "steam_api64.dll";
-			
+
 			if (File.Exists(Path.Combine(_gamePath, socialClubLauncherExecutablePath)))
 				relativeFilePaths.Add(socialClubLauncherExecutablePath);
 

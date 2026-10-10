@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -210,11 +210,16 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 
 			try
 			{
-			    CleanupClientDirectory(extractionPath);
-                await ZipExtractor.ExtractToDirectoryAsync(updateFilePath, extractionPath, true);
-			    Directory.Delete(GetUpdateDownloadFolder(), true);
+				// Create the target before the cleanup runs: on a first install the bin
+				// folder does not exist yet, which is exactly the case where the client
+				// is needed most.
+				Directory.CreateDirectory(extractionPath);
 
-                return true;
+				CleanupClientDirectory(extractionPath);
+				await ZipExtractor.ExtractToDirectoryAsync(updateFilePath, extractionPath, true);
+				Directory.Delete(GetUpdateDownloadFolder(), true);
+
+				return true;
 			}
 			catch (Exception ex)
 			{
@@ -267,6 +272,16 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 
 	    private void CleanupClientDirectory(string path)
 	    {
+	        // This ran before the extraction and did an unguarded Directory.GetFiles,
+	        // which throws DirectoryNotFoundException on a first run - the bin folder
+	        // does not exist yet exactly when a fresh install needs the client most.
+	        // The caller caught that and reported "Failed to extract update", so the
+	        // message pointed at the extraction although nothing had been extracted.
+	        if (!Directory.Exists(path))
+	        {
+	            return;
+	        }
+
 	        foreach (var file in Directory.GetFiles(path, "*.pdb", SearchOption.AllDirectories))
 	        {
 	            File.Delete(file);
