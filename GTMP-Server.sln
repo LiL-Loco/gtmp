@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5A358F91-D638-4E54-91C3-247FD612DBBD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GTMP.Shared", "src\GTMP.Shared\GTMP.Shared.csproj", "{D6A12694-4180-4298-9E19-F4EEBF7CA6C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GTMP.Scripting", "src\GTMP.Scripting\GTMP.Scripting.csproj", "{5BB3F6F4-F86E-450E-8C88-04A8809722AC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GTMP.Server.Core", "src\GTMP.Server.Core\GTMP.Server.Core.csproj", "{5F6E7FB2-76B6-45A2-9FEB-EA2BF3FDD3E7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GTMP.Server.Host", "src\GTMP.Server.Host\GTMP.Server.Host.csproj", "{4F8220EF-746F-45D7-B17F-DC0F669DDC73}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{42518446-B326-4EF9-BED7-EAA551B61EA0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GTMP.Server.Tests", "test\GTMP.Server.Tests\GTMP.Server.Tests.csproj", "{A0D31308-86C0-4F5F-9AF2-F7AFDE840D90}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D6A12694-4180-4298-9E19-F4EEBF7CA6C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6A12694-4180-4298-9E19-F4EEBF7CA6C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6A12694-4180-4298-9E19-F4EEBF7CA6C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6A12694-4180-4298-9E19-F4EEBF7CA6C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BB3F6F4-F86E-450E-8C88-04A8809722AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BB3F6F4-F86E-450E-8C88-04A8809722AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BB3F6F4-F86E-450E-8C88-04A8809722AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BB3F6F4-F86E-450E-8C88-04A8809722AC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F6E7FB2-76B6-45A2-9FEB-EA2BF3FDD3E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F6E7FB2-76B6-45A2-9FEB-EA2BF3FDD3E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F6E7FB2-76B6-45A2-9FEB-EA2BF3FDD3E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F6E7FB2-76B6-45A2-9FEB-EA2BF3FDD3E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F8220EF-746F-45D7-B17F-DC0F669DDC73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F8220EF-746F-45D7-B17F-DC0F669DDC73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F8220EF-746F-45D7-B17F-DC0F669DDC73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F8220EF-746F-45D7-B17F-DC0F669DDC73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0D31308-86C0-4F5F-9AF2-F7AFDE840D90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0D31308-86C0-4F5F-9AF2-F7AFDE840D90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0D31308-86C0-4F5F-9AF2-F7AFDE840D90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0D31308-86C0-4F5F-9AF2-F7AFDE840D90}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D6A12694-4180-4298-9E19-F4EEBF7CA6C1} = {5A358F91-D638-4E54-91C3-247FD612DBBD}
+		{5BB3F6F4-F86E-450E-8C88-04A8809722AC} = {5A358F91-D638-4E54-91C3-247FD612DBBD}
+		{5F6E7FB2-76B6-45A2-9FEB-EA2BF3FDD3E7} = {5A358F91-D638-4E54-91C3-247FD612DBBD}
+		{4F8220EF-746F-45D7-B17F-DC0F669DDC73} = {5A358F91-D638-4E54-91C3-247FD612DBBD}
+		{A0D31308-86C0-4F5F-9AF2-F7AFDE840D90} = {42518446-B326-4EF9-BED7-EAA551B61EA0}
+	EndGlobalSection
+EndGlobal

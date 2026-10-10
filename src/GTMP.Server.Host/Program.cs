@@ -1,0 +1,163 @@
+﻿using System.Text.Json;
+using GTMP.Server.Core;
+using GTMP.Server.Core.Configuration;
+using GTMP.Server.Core.Runtime;
+
+namespace GTMP.Server.Host;
+
+internal static class Program
+{
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true
+    };
+
+    private static bool _shutdownRequested;
+
+    private static int Main(string[] args)
+    {
+        var commandLine = CommandLine.Parse(args);
+
+        var baseDirectory = AppContext.BaseDirectory;
+        var settings = LoadSettings(baseDirectory);
+        var logger = new ConsoleLogger();
+
+        if (commandLine.Port.HasValue) settings.Port = commandLine.Port.Value;
+        if (commandLine.TickRate.HasValue) settings.TickRate = commandLine.TickRate.Value;
+
+        try
+        {
+            settings.Validate();
+        }
+        catch (Exception exception)
+        {
+            logger.Error("Server configuration is invalid.", exception);
+            return 1;
+        }
+
+        var context = new ServerContext(settings, logger);
+
+        var tickLoop = new TickLoop
+        {
+            Settings = settings,
+            ShouldContinue = () => !_shutdownRequested
+        };
+
+        tickLoop.Register(new HeartbeatTick(context));
+
+        // Ctrl+C has to be handled before the loop starts, otherwise a long blocking
+        // sleep swallows the signal and the server looks hung.
+        using var shutdownSignal = new ManualResetEventSlim(false);
+
+        Console.CancelKeyPress += (_, eventArgs) =>
+        {
+            eventArgs.Cancel = true;
+            _shutdownRequested = true;
+            shutdownSignal.Set();
+        };
+
+        logger.Info($"{settings.ServerName} starting on port {settings.Port} ({settings.TicksPerSecond} ticks/s).");
+
+        var loopTask = Task.Run(() => tickLoop.Run());
+
+        if (commandLine.RunForSeconds.HasValue)
+        {
+            // Bounded run so the lifecycle can be exercised from a script or a
+            // container health check without sending a console signal.
+            var budget = TimeSpan.FromSeconds(commandLine.RunForSeconds.Value);
+
+            if (!shutdownSignal.Wait(budget))
+            {
+                logger.Info($"Run time of {budget.TotalSeconds:F0}s reached, shutting down.");
+                _shutdownRequested = true;
+            }
+        }
+        else
+        {
+            shutdownSignal.Wait();
+        }
+
+        loopTask.Wait(TimeSpan.FromSeconds(5));
+
+        logger.Info($"Stopped after {context.Uptime.TotalSeconds:F0}s and {tickLoop.TickNumber} ticks.");
+        logger.Info($"{context.Entities.Count} entities, {context.PlayerCount} players.");
+
+        return 0;
+    }
+
+    private static ServerSettings LoadSettings(string baseDirectory)
+    {
+        var settingsPath = Path.Combine(baseDirectory, "server.json");
+
+        if (!File.Exists(settingsPath))
+        {
+            var defaults = new ServerSettings();
+            File.WriteAllText(settingsPath, JsonSerializer.Serialize(defaults, JsonOptions));
+            return defaults;
+        }
+
+        return JsonSerializer.Deserialize<ServerSettings>(
+                   File.ReadAllText(settingsPath), JsonOptions)
+               ?? new ServerSettings();
+    }
+
+    /// <summary>Writes a periodic status line so the process is observably alive.</summary>
+    private sealed class HeartbeatTick(ServerContext context) : IServerTick
+    {
+        private const int ReportEveryTicks = 200;
+
+        public void Tick(long tickNumber)
+        {
+            context.TickNumber = tickNumber;
+
+            if (tickNumber % ReportEveryTicks != 0) return;
+
+            context.Logger.Info(
+                $"tick {tickNumber} | uptime {context.Uptime.TotalSeconds:F0}s | " +
+                $"players {context.PlayerCount} | entities {context.Entities.Count}");
+        }
+    }
+}
+
+internal sealed class ConsoleLogger : IServerLogger
+{
+    public void Info(string message) => Console.WriteLine($"[INFO ] {message}");
+
+    public void Warn(string message) => Console.WriteLine($"[WARN ] {message}");
+
+    public void Error(string message, Exception? exception = null) =>
+        Console.Error.WriteLine($"[ERROR] {message}{(exception is null ? string.Empty : Environment.NewLine + exception)}");
+}
+
+/// <summary>Parsed command line. Unknown arguments are rejected rather than ignored.</summary>
+internal sealed record CommandLine(int? Port, int? TickRate, int? RunForSeconds)
+{
+    public static CommandLine Parse(string[] args)
+    {
+        int? port = null, tickRate = null, runFor = null;
+
+        for (var i = 0; i < args.Length; i++)
+        {
+            switch (args[i])
+            {
+                case "--port" when i + 1 < args.Length:
+                    port = int.Parse(args[++i]);
+                    break;
+
+                case "--tick-rate" when i + 1 < args.Length:
+                    tickRate = int.Parse(args[++i]);
+                    break;
+
+                case "--run-for" when i + 1 < args.Length:
+                    runFor = int.Parse(args[++i]);
+                    break;
+
+                default:
+                    throw new ArgumentException($"Unknown or incomplete argument: {args[i]}");
+            }
+        }
+
+        return new CommandLine(port, tickRate, runFor);
+    }
+}
