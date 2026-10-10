@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GTMP.Shared\GTMP.Shared.csproj" />
+    <ProjectReference Include="..\GTMP.Scripting\GTMP.Scripting.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

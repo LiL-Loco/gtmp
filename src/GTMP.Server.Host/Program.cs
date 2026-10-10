@@ -4,6 +4,8 @@ using GTMP.Server.Core;
 using GTMP.Server.Core.Configuration;
 using GTMP.Server.Core.Networking;
 using GTMP.Server.Core.Runtime;
+using GTMP.Server.Core.Scripting;
+using GTMP.Scripting.Hosting;
 
 namespace GTMP.Server.Host;
 
@@ -40,9 +42,20 @@ internal static class Program
 
         var context = new ServerContext(settings, logger);
 
+        var natives = new ServerNatives(context);
+        var scriptEngine = new ScriptEngine(natives.Registry);
+        var scripts = new ScriptTickService(context, scriptEngine);
+
         var network = new NetworkService(context);
         var replication = new EntityReplicationService(context, network);
         network.SetFullSyncHandler(replication.SendFullSyncTo);
+
+        network.PlayerConnected += session => scripts.OnPlayerConnected(session.PlayerHandle, session.Name);
+        network.PlayerDisconnected += session => scripts.OnPlayerDisconnected(session.PlayerHandle);
+
+        var resourceFolder = Path.Combine(baseDirectory, settings.ResourceFolder);
+        var loadedScripts = scripts.LoadResourceFolder(resourceFolder);
+        logger.Info($"Loaded {loadedScripts} script(s) from {resourceFolder}.");
 
         var tickLoop = new TickLoop
         {
@@ -51,8 +64,9 @@ internal static class Program
         };
 
         tickLoop.Register(new PumpInboundTick(network));
+        tickLoop.Register(scripts);
         tickLoop.Register(replication);
-        tickLoop.Register(new HeartbeatTick(context, network, replication));
+        tickLoop.Register(new HeartbeatTick(context, network, replication, scripts));
 
         // Ctrl+C has to be handled before the loop starts, otherwise a long blocking
         // sleep swallows the signal and the server looks hung.
@@ -133,7 +147,8 @@ internal static class Program
     private sealed class HeartbeatTick(
         ServerContext context,
         NetworkService network,
-        EntityReplicationService replication) : IServerTick
+        EntityReplicationService replication,
+        ScriptTickService scripts) : IServerTick
     {
         private const int ReportEveryTicks = 200;
 
@@ -147,7 +162,7 @@ internal static class Program
                 $"tick {tickNumber} | uptime {context.Uptime.TotalSeconds:F0}s | " +
                 $"players {context.PlayerCount} | entities {context.Entities.Count} | " +
                 $"sessions {network.SessionCount} | drops {network.DroppedPackets} | " +
-                $"repl {replication.UpdatesSent}u/{replication.DeletesSent}d");
+                $"repl {replication.UpdatesSent}u/{replication.DeletesSent}d | scripts {scripts.LoadedScriptCount}/{scripts.ScriptErrors}err");
         }
     }
 }

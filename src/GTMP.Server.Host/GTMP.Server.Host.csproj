@@ -5,6 +5,13 @@
     <ProjectReference Include="..\GTMP.Shared\GTMP.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- server.json and the .pwn resources belong next to the executable so the
+         server can be deployed as a plain folder without a build step. -->
+    <None Update="server.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="resources\**\*.pwn" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
