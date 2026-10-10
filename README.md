@@ -15,9 +15,11 @@ written in a small Pawn-like language.
 | `src/GTMP.Shared` | Data model and the wire protocol contract, shared by client and server |
 | `src/GTMP.Server.Core` | Tick loop, entity registry, networking, replication, server API |
 | `src/GTMP.Server.Host` | Console server executable |
+| `src/GTMP.Server.MasterApi` | Master, status and forum HTTP endpoints the launcher calls |
 | `src/GTMP.Scripting` | Lexer, parser and interpreter for the Pawn subset |
 | `src/GTMP.Client` | Reference client, headless, used to exercise the protocol |
 | `test/GTMP.Server.Tests` | Unit and end-to-end tests |
+| `test/GTMP.Server.MasterApi.Tests` | Endpoint and contract tests for the master API |
 | `test/GTMP.Scripting.Tests` | Language and engine tests |
 
 ## Build and test
@@ -45,6 +47,71 @@ exercised from CI or a container health check without sending a console signal.
 
 Settings live in `server.json` next to the executable and are created with defaults on
 first start.
+
+## Master API
+
+The GT-MP launcher expects a master server, a status server and a forum API before it
+shows anything useful. `GTMP.Server.MasterApi` implements all three over one HTTP
+listener; they differ by path, not by port.
+
+```bash
+dotnet run --project src/GTMP.Server.MasterApi -- --port 4599
+```
+
+| Path | Purpose |
+|---|---|
+| `GET /servers/detailed` | Server list shown in the launcher |
+| `GET /servers/verified` | Addresses that count as verified |
+| `GET /stats/masterlist` | Aggregate counters |
+| `GET /api/v1/components` | Status page components |
+| `GET /?news` | News for the start screen |
+| `GET /?action=getPost&hash=<key>&value=<id>` | Single troubleshooting article |
+| `GET /update/{channel}/{game,cef,launcher,client}/version` | Version, plain text |
+| `GET /update/{channel}/{launcher,client}/hash` | SHA-256 of the archive, plain text |
+| `GET /update/{channel}/{launcher,client}/files` | Update archive |
+
+Anything not published returns `404` rather than an empty success, so the launcher
+reports "nothing available" instead of a malformed payload.
+
+### Configuration
+
+`masterapi.json` sits next to the executable and is created with defaults on first
+start. **Field names are the wire names, not the C# property names** - several
+properties carry an explicit rename (`ip`, `thread_id`, `create_at`, ...), and
+System.Text.Json matches only the effective name. A config that spells
+`IpPortAddress` loads without error and publishes a server with an empty address.
+The host validates the file at startup and prints every such problem instead of
+refusing to start: a typo in a data file should not take the master server offline.
+
+Update artifacts live in the `artifacts` directory, resolved relative to the
+executable:
+
+```
+artifacts/update/{channel}/{kind}/version     plain version string
+artifacts/update/{channel}/{kind}/files.zip   update archive
+```
+
+The hash is computed from the archive rather than read from a file, so the two can
+never disagree. `game/version` is intentionally unpublished: a guessed supported GTA
+V version would be worse than none, and the launcher degrades cleanly to
+"Failed to check currently supported GTA 5 version" when it is missing.
+
+### Verifying the launcher contract
+
+The launcher reads these responses with Newtonsoft using default settings, so a wrong
+field name does not throw - it yields an empty object that looks like "no servers".
+`tools/verify-launcher-contract.ps1` closes that gap by loading the built launcher
+assembly and deserializing live responses into the launcher's own types.
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+    -File tools\verify-launcher-contract.ps1 `
+    -BaseUrl http://127.0.0.1:4599 `
+    -LauncherBinDirectory F:\GTMP\GTMP-Launcher\src\GTANetworkLauncher.WPF\bin\Debug
+```
+
+It must run under **Windows PowerShell 5.1**. PowerShell 7 runs on .NET and cannot
+load a .NET Framework WPF assembly.
 
 ## Protocol
 
@@ -119,3 +186,7 @@ logged and skipped instead of taking the server down.
 - **A client may only write to its own player handle.** Anything else is rejected, so
   no client can teleport another.
 - **Sessions are reaped by timeout**, because UDP has no disconnect packet.
+- **The master API answers with PascalCase**, because that is what the launcher's
+  Newtonsoft defaults expect. Minimal APIs default to camelCase, so the serializer is
+  configured explicitly; getting this wrong produces a launcher that silently shows
+  nothing.

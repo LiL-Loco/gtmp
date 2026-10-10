@@ -1,0 +1,61 @@
+{
+  "Servers": [
+    {
+      "Port": 4499,
+      "MaxPlayers": 100,
+      "ServerName": "GT-MP Development",
+      "CurrentPlayers": 0,
+      "GameMode": "Freeroam",
+      "ip": "127.0.0.1:4499",
+      "Passworded": false,
+      "Fqdn": "127.0.0.1",
+      "ServerVersion": "1.0.0"
+    }
+  ],
+  "VerifiedServers": [
+    "127.0.0.1:4499"
+  ],
+  "News": [
+    {
+      "thread_id": 1,
+      "post_date": 1767322800,
+      "Title": "Welcome to the development master server",
+      "username": "admin",
+      "message": "This master server runs the GTMP.Server.MasterApi endpoints.",
+      "absolute_url": "https://example.com/news/1"
+    }
+  ],
+  "Components": [
+    {
+      "Id": 1,
+      "Name": "Master Server",
+      "Description": "Server list, statistics and update metadata",
+      "Link": "https://example.com",
+      "Status": 1,
+      "Order": 1,
+      "group_id": 1,
+      "Enabled": true,
+      "create_at": "2026-01-01 00:00:00",
+      "updated_at": "2026-01-01 00:00:00",
+      "deleted_at": null,
+      "status_name": "Operational"
+    },
+    {
+      "Id": 2,
+      "Name": "Status Server",
+      "Description": "Component status page",
+      "Link": "https://example.com/status",
+      "Status": 1,
+      "Order": 2,
+      "group_id": 1,
+      "Enabled": true,
+      "create_at": "2026-01-01 00:00:00",
+      "updated_at": "2026-01-01 00:00:00",
+      "deleted_at": null,
+      "status_name": "Operational"
+    }
+  ],
+  "ArtifactDirectory": "artifacts",
+  "ForumApiKey": "change-me",
+  "ForumBaseUrl": "https://example.com"
+}
