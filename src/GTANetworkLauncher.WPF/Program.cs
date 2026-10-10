@@ -24,7 +24,41 @@ namespace GrandTheftMultiplayer.Launcher
             }
 
             AppDomain.CurrentDomain.AssemblyResolve += OnResolveAssembly;
-            App.Main();
+
+            // App.Main loads App.xaml and its merged resource dictionaries before
+            // OnStartup runs, so a malformed theme dies here - outside every handler
+            // the application installs. WPF reports it only as "CLR20r3" with no
+            // file and no line, which is indistinguishable from "it does not start".
+            try
+            {
+                App.Main();
+            }
+            catch (Exception ex)
+            {
+                var root = ex;
+                while (root.InnerException != null) root = root.InnerException;
+
+                var report = $"{root.GetType().Name}: {root.Message}";
+
+                try
+                {
+                    System.IO.File.AppendAllText(
+                        System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup-error.log"),
+                        $"[{DateTime.Now:HH:mm:ss}] {report}{Environment.NewLine}{root.StackTrace}{Environment.NewLine}{Environment.NewLine}");
+                }
+                catch (Exception)
+                {
+                    // Reporting the failure must not become a second failure.
+                }
+
+                try
+                {
+                    MessageBox.Show(report, "Launcher failed to start", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (Exception)
+                {
+                }
+            }
         }
 
         private static Assembly OnResolveAssembly(object sender, ResolveEventArgs args)

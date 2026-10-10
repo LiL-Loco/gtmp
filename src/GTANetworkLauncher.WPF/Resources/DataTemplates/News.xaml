@@ -18,52 +18,89 @@
 
             <Grid Grid.Row="0">
 
-                <Grid VerticalAlignment="Bottom" Background="#AA000000">
+                <!--
+                    Was a semi-transparent black scrim over the news image,
+                    assuming a light panel underneath. On the dark theme it is
+                    an invisible tint, so it reads as SurfaceRaised instead.
+                -->
+                <Grid VerticalAlignment="Bottom" Background="{DynamicResource SurfaceRaisedBrush}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <TextBlock
-						Text="{Binding ForumPostItem.Title}"
-						FontSize="20"
-						Foreground="#FFFFFF"
-						Margin="5"
-						Grid.Column="0"/>
+                        Text="{Binding ForumPostItem.Title}"
+                        FontFamily="{StaticResource UiFontSemibold}"
+                        FontSize="18"
+                        Foreground="{DynamicResource TextPrimaryBrush}"
+                        Margin="12,10"
+                        TextTrimming="CharacterEllipsis"
+                        Grid.Column="0"/>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <TextBlock
+                            FontFamily="{StaticResource UiFont}"
                             FontSize="12"
-                            Foreground="#FFE0E0E0"
+                            Foreground="{DynamicResource TextSecondaryBrush}"
                             VerticalAlignment="Center"
-                            Margin="0,0,10,0">
+                            Margin="0,0,12,0">
                             <Run Text="By:" />
                             <Run Text="{Binding ForumPostItem.Author}" />
                             <Run Text="on"/>
                             <Run Text="{Binding ForumPostItem.Timestamp, StringFormat=dd/MM/yyyy HH:mm}" />
                         </TextBlock>
 
-                        <Button Command="{Binding ToggleReadMoreCommand}">
+                        <!--
+                          The default MahApps button rendered white-on-light here:
+                          its accent fill came from the light theme, so it stayed a
+                          white block against the dark news panel. Explicit accent
+                          fill, matching the LAUNCH button in the header.
+                        -->
+                        <Button Command="{Binding ToggleReadMoreCommand}"
+                                Background="{DynamicResource AccentInteractiveBrush}"
+                                BorderThickness="0"
+                                Foreground="{DynamicResource IdealForegroundColorBrush}"
+                                Padding="12,6"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="{x:Type Button}">
+                                    <Border x:Name="Bd"
+                                            Background="{TemplateBinding Background}"
+                                            CornerRadius="3"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"
+                                                          TextBlock.Foreground="{TemplateBinding Foreground}" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentInteractiveHoverBrush}" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="Bd" Property="Opacity" Value="0.85" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition />
                                     <ColumnDefinition Width="20" />
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Margin="0,0,10,0">Read more</TextBlock>
+                                <TextBlock Margin="0,0,10,0"
+                                           Text="Read more"
+                                           Foreground="{DynamicResource IdealForegroundColorBrush}" />
 
-                                <Rectangle Fill="{DynamicResource FlatButtonForegroundBrush}" Grid.Column="1">
+                                <Rectangle Width="14"
+                                           Height="14"
+                                           VerticalAlignment="Center"
+                                           Fill="{DynamicResource IdealForegroundColorBrush}"
+                                           Grid.Column="1">
                                     <Rectangle.OpacityMask>
-                                        <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_chevron_down}" >
-                                            <VisualBrush.RelativeTransform>
-                                                <TransformGroup>
-                                                    <ScaleTransform CenterY="0.5" CenterX="0.5"/>
-                                                    <SkewTransform CenterY="0.5" CenterX="0.5"/>
-                                                    <RotateTransform Angle="-90" CenterY="0.5" CenterX="0.5"/>
-                                                    <TranslateTransform/>
-                                                </TransformGroup>
-                                            </VisualBrush.RelativeTransform>
-                                        </VisualBrush>
+                                        <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_chevron_right}" />
                                     </Rectangle.OpacityMask>
                                 </Rectangle>
                             </Grid>
@@ -73,7 +110,11 @@
                 </Grid>
             </Grid>
 
-            <Grid Background="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" Grid.Row="1">
+            <!-- Explicit surface brush. This used to read SystemColors.MenuBrushKey, which
+                 is white on a light system and is only dark on this theme because
+                 ModernDark.xaml overrides that system key. Naming the surface
+                 directly makes the panel independent of the system palette. -->
+            <Grid Background="{DynamicResource AppBackgroundBrush}" Grid.Row="1">
                 <ContentPresenter>
                     <ContentPresenter.Content>
                         <MultiBinding Converter="{StaticResource HtmlPanelDisplayConverter}">

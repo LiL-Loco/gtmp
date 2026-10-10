@@ -22,8 +22,8 @@
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.AnimatedTabControl.xaml" />
                 
                 <!-- Accent and AppTheme setting -->
-                <ResourceDictionary Source="pack://application:,,,/Resources/Accents/GtMpRed.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Resources/Themes/GtMpRed.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Resources/Accents/Modern.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Resources/Themes/ModernDark.xaml" />
 
                 <!-- Icons -->
                 <ResourceDictionary Source="/Resources/Icons.xaml" />
@@ -35,6 +35,13 @@
                     <converters:StringLengthToVisibilityConverter x:Key="StringLengthToVisibilityConverter" />
                 </ResourceDictionary>
 
+                <!-- Shared styles. Merged BEFORE the data templates on purpose:
+                     the templates reference UiFont / UiFontSemibold / the button
+                     and grid-header styles by StaticResource, and merged
+                     dictionaries resolve in order, so a key defined further down
+                     is not found yet at that point. -->
+                <ResourceDictionary Source="/Resources/Styles.xaml" />
+
                 <!-- Data templates -->
                 <ResourceDictionary Source="/Resources/DataTemplates/Help.xaml" />
                 <ResourceDictionary Source="/Resources/DataTemplates/Troubleshoot.xaml" />
@@ -43,7 +50,6 @@
                 <ResourceDictionary Source="/Resources/DataTemplates/Notification.xaml" />
                 <ResourceDictionary Source="/Resources/DataTemplates/ServerBrowser.xaml" />
 
-                <ResourceDictionary Source="/Resources/Styles.xaml" />
 			</ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

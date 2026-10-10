@@ -1,0 +1,156 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:options="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    mc:Ignorable="options">
+
+    <!--
+      Dark surface palette. Keys deliberately match the ones the released light
+      theme overrode, so every MahApps control that referenced them follows
+      along without being touched individually.
+
+      Naming: AppBackground < Surface < SurfaceRaised < Border.
+      Text: TextPrimary > TextSecondary > TextMuted.
+    -->
+
+    <Color x:Key="AppBackgroundColor">#FF0B0C10</Color>
+    <Color x:Key="SurfaceColor">#FF14161C</Color>
+    <Color x:Key="SurfaceRaisedColor">#FF1D2027</Color>
+    <Color x:Key="BorderColor">#FF272B33</Color>
+
+    <Color x:Key="TextPrimaryColor">#FFEDEFF2</Color>
+    <Color x:Key="TextSecondaryColor">#FF9BA1A9</Color>
+    <Color x:Key="TextMutedColor">#FF6E747C</Color>
+
+    <!--
+      MahApps names its greys Gray1..Gray10. They are remapped here rather than
+      left at their light values, because controls still reference them by name.
+    -->
+    <Color x:Key="BlackColor">#FF0B0C10</Color>
+    <Color x:Key="WhiteColor">#FFEDEFF2</Color>
+
+    <Color x:Key="Gray1">#FF1D2027</Color>
+    <Color x:Key="Gray2">#FF6E747C</Color>
+    <Color x:Key="Gray7">#FF272B33</Color>
+    <Color x:Key="Gray8">#FF2F343D</Color>
+    <Color x:Key="Gray10">#FF191C22</Color>
+
+    <Color x:Key="GrayNormal">#FF9BA1A9</Color>
+    <Color x:Key="GrayHover">#FFEDEFF2</Color>
+
+    <Color x:Key="FlyoutColor">#FF14161C</Color>
+
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="{StaticResource SurfaceRaisedColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="BorderBrushSoft" Color="{StaticResource BorderColor}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" options:Freeze="True" />
+
+    <!-- Window chrome -->
+    <SolidColorBrush x:Key="BlackBrush" Color="{StaticResource BlackColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="LabelTextBrush" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="BlackColorBrush" Color="{StaticResource BlackColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource AppBackgroundColor}" options:Freeze="True" />
+    <!--
+      Title bar. This lived in the accent dictionary and pointed at AccentColor,
+      which filled the entire window chrome with full-saturation violet. A title
+      bar is a surface; the accent belongs to the glow and the LAUNCH button.
+      It has to live here, not in Accents/Modern.xaml: merged dictionaries
+      resolve in order, and the accent is merged before the theme, so a theme
+      key referenced from the accent dictionary is simply not found yet.
+    -->
+    <SolidColorBrush x:Key="WindowTitleColorBrush" Color="{StaticResource SurfaceColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="ControlBackgroundBrush" Color="{StaticResource SurfaceColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="WhiteColorBrush" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="DisabledWhiteBrush" Color="{StaticResource TextMutedColor}" options:Freeze="True" />
+
+    <!-- Focus and hover borders. These used to be near-black, which made the
+         focused control look identical to the unfocused one on a dark surface. -->
+    <SolidColorBrush x:Key="TextBoxMouseOverInnerBorderBrush" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="TextBoxFocusBorderBrush" Color="{StaticResource AccentInteractive}" options:Freeze="True" />
+    <SolidColorBrush x:Key="ButtonMouseOverBorderBrush" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="ButtonMouseOverInnerBorderBrush" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="ComboBoxMouseOverBorderBrush" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="ComboBoxMouseOverInnerBorderBrush" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="GrayBrush1" Color="{StaticResource Gray1}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush2" Color="{StaticResource Gray2}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush7" Color="{StaticResource Gray7}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush8" Color="{StaticResource Gray8}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush10" Color="{StaticResource Gray10}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="GrayNormalBrush" Color="{StaticResource GrayNormal}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayHoverBrush" Color="{StaticResource GrayHover}" options:Freeze="True" />
+
+    <!-- Sliders -->
+    <SolidColorBrush x:Key="SliderValueDisabled" Color="#FF3A3F48" options:Freeze="True" />
+    <SolidColorBrush x:Key="SliderTrackDisabled" Color="#FF242830" options:Freeze="True" />
+    <SolidColorBrush x:Key="SliderThumbDisabled" Color="#FF4A505A" options:Freeze="True" />
+    <SolidColorBrush x:Key="SliderTrackHover" Color="#FF3A3F48" options:Freeze="True" />
+    <SolidColorBrush x:Key="SliderTrackNormal" Color="#FF2F343D" options:Freeze="True" />
+
+    <!-- Flyouts -->
+    <SolidColorBrush x:Key="FlyoutBackgroundBrush" Color="{StaticResource FlyoutColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="FlyoutForegroundBrush" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="FlatButtonPressedBackgroundBrush" Color="{StaticResource SurfaceRaisedColor}" options:Freeze="True" />
+
+    <!-- Menus. MenuTextBrushKey matters: without it the context menu rendered
+         light-on-light once the background went dark. -->
+    <SolidColorBrush x:Key="MenuBackgroundBrush" Color="{StaticResource SurfaceRaisedColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="ContextMenuBackgroundBrush" Color="{StaticResource SurfaceRaisedColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="SubMenuBackgroundBrush" Color="{StaticResource SurfaceRaisedColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MenuItemBackgroundBrush" Color="{StaticResource SurfaceRaisedColor}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="ContextMenuBorderBrush" Color="{StaticResource BorderColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="SubMenuBorderBrush" Color="{StaticResource BorderColor}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="MenuItemSelectionFill" Color="{StaticResource AccentColor3}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MenuItemSelectionStroke" Color="{StaticResource AccentColor3}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="TopMenuItemPressedFill" Color="{StaticResource SurfaceColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="TopMenuItemPressedStroke" Color="{StaticResource BorderColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="TopMenuItemSelectionStroke" Color="{StaticResource AccentInteractive}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="DisabledMenuItemForeground" Color="{StaticResource Gray2}" options:Freeze="True" />
+    <SolidColorBrush x:Key="DisabledMenuItemGlyphPanel" Color="{StaticResource TextMutedColor}" options:Freeze="True" />
+
+    <Color x:Key="MenuShadowColor">#CC000000</Color>
+
+    <!-- DataGrid -->
+    <SolidColorBrush x:Key="MetroDataGrid.DisabledHighlightBrush" Color="{StaticResource Gray7}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MetroDataGridRowBackgroundBrush" Color="Transparent" options:Freeze="True" />
+    <SolidColorBrush x:Key="MetroDataGridRowMouseOverBrush" Color="{StaticResource SurfaceRaisedColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MetroDataGridBorderBrush" Color="{StaticResource BorderColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MetroDataGridColumnHeaderForegroundBrush" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MetroDataGridColumnHeaderBackgroundBrush" Color="{StaticResource SurfaceColor}" options:Freeze="True" />
+
+    <!-- ToggleSwitch -->
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.PressedBrush.Win10" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OffBorderBrush.Win10" Color="{StaticResource BorderColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OffMouseOverBorderBrush.Win10" Color="{StaticResource TextMutedColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OffDisabledBorderBrush.Win10" Color="{StaticResource BorderColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OnSwitchDisabledBrush.Win10" Color="{StaticResource AccentColor3}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.ThumbIndicatorBrush.Win10" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.ThumbIndicatorMouseOverBrush.Win10" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.ThumbIndicatorPressedBrush.Win10" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.ThumbIndicatorDisabledBrush.Win10" Color="{StaticResource TextMutedColor}" options:Freeze="True" />
+
+    <!-- System keys. Menus and tooltips read these directly.
+
+         MenuBrushKey is not optional next to MenuTextBrushKey: News.xaml and
+         Help.xaml paint their body panels with MenuBrushKey. Overriding only
+         the text key left a white panel with white text on it. -->
+    <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="{StaticResource AppBackgroundColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.MenuTextBrushKey}" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.MenuBrushKey}" Color="{StaticResource SurfaceColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{StaticResource SurfaceColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.InfoBrushKey}" Color="{StaticResource SurfaceColor}" options:Freeze="True" />
+
+</ResourceDictionary>

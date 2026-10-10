@@ -2,56 +2,130 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls">
 
+    <!--
+      Typography and shared control styles.
+
+      The released UI used Arial at 35px with a drop shadow for its headings and
+      20px tab headers, which is where the dated impression came from. Everything
+      here is Segoe UI on a small scale, with the accent used for state rather
+      than decoration.
+    -->
+
+    <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
+    <FontFamily x:Key="UiFontSemibold">Segoe UI Semibold</FontFamily>
+
+    <!-- Headline above the content area. -->
     <Style x:Key="HeaderTextStyle" TargetType="Label">
-        <Setter Property="Effect">
-            <Setter.Value>
-                <DropShadowEffect BlurRadius="3" Direction="310" ShadowDepth="2"/>
-            </Setter.Value>
-        </Setter>
-        <Setter Property="FontFamily" Value="Arial" />
-        <Setter Property="FontSize" Value="35" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFontSemibold}" />
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="Margin" Value="0,0,0,4" />
+        <Setter Property="Effect" Value="{x:Null}" />
     </Style>
 
+    <!--
+      Primary navigation. Kept as a TabControl rather than a custom control: the
+      selection state is bound in code-behind, and replacing the control would
+      mean reimplementing that for no visual gain.
+
+      MahApps 1.4.3 only offers HeaderFontSize, HeaderFontStretch,
+      HeaderFontWeight and HeaderMargin as attached properties - there is no
+      HeaderForeground. Header colour therefore comes from Foreground plus
+      triggers below.
+    -->
+    <Style x:Key="NavTabItem" BasedOn="{StaticResource MetroTabItem}" TargetType="{x:Type TabItem}">
+        <Setter Property="controls:ControlsHelper.HeaderFontSize" Value="13" />
+        <Setter Property="controls:ControlsHelper.HeaderFontWeight" Value="SemiBold" />
+        <Setter Property="controls:ControlsHelper.HeaderMargin" Value="0,0,0,0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+                <Setter Property="Opacity" Value="0.5" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Second level navigation inside Servers and Settings. -->
     <Style x:Key="SubTabItem" BasedOn="{StaticResource MetroTabItem}" TargetType="{x:Type TabItem}">
-        <Setter Property="controls:ControlsHelper.HeaderFontSize" Value="20" />
+        <Setter Property="controls:ControlsHelper.HeaderFontSize" Value="12" />
+        <Setter Property="controls:ControlsHelper.HeaderFontWeight" Value="Normal" />
+        <Setter Property="controls:ControlsHelper.HeaderMargin" Value="0,0,0,0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource AccentInteractiveBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.5" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
-    <!-- List view item override -->
+    <!-- Small uppercase caption used above grouped settings. -->
+    <Style x:Key="SectionCaptionStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource UiFontSemibold}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+
+    <!-- Body label. -->
+    <Style x:Key="BodyLabelStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
+    <Style x:Key="SecondaryLabelStyle" BasedOn="{StaticResource BodyLabelStyle}" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    </Style>
+
+    <!--
+      List view rows. The released template painted the selected row in full
+      accent colour, which turned a server list into a solid block of red as soon
+      as more than one row was selected. Selection is now a tint plus a left edge.
+    -->
     <Style x:Key="MetroListViewItemBordered" TargetType="{x:Type ListViewItem}">
-        <Setter Property="Foreground" Value="{DynamicResource BlackBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
         <Setter Property="Margin" Value="0" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="MinHeight" Value="25" />
+        <Setter Property="MinHeight" Value="30" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ListViewItem}">
                     <Border x:Name="Bd"
                             Background="{TemplateBinding Background}"
-                            BorderThickness="0,0.5,0,0.5"
-                            BorderBrush="{DynamicResource AccentColorBrush4}">
+                            BorderThickness="0,0,0,1"
+                            BorderBrush="{DynamicResource BorderBrushSoft}">
                         <Grid>
+                            <Border x:Name="SelectionEdge"
+                                    Width="2"
+                                    HorizontalAlignment="Left"
+                                    Background="Transparent" />
                             <GridViewRowPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
                                 <GridViewRowPresenter.Resources>
                                     <Style TargetType="{x:Type TextBlock}">
                                         <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}, Path=Foreground}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Path=IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}}" Value="True">
-                                                <Setter Property="Foreground" Value="{DynamicResource AccentSelectedColorBrush}" />
+                                                <Setter Property="Foreground" Value="{DynamicResource AccentInteractiveBrush}" />
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Path=IsEnabled, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" Value="False">
-                                                <Setter Property="Foreground" Value="{DynamicResource GrayNormalBrush}" />
+                                                <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
                                             </DataTrigger>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding Path=IsEnabled, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" Value="False" />
-                                                    <Condition Binding="{Binding Path=IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}}" Value="True" />
-                                                </MultiDataTrigger.Conditions>
-                                                <MultiDataTrigger.Setters>
-                                                    <Setter Property="Foreground" Value="{DynamicResource AccentSelectedColorBrush}" />
-                                                </MultiDataTrigger.Setters>
-                                            </MultiDataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </GridViewRowPresenter.Resources>
@@ -68,20 +142,19 @@
                         <Trigger Property="GridView.ColumnCollection" Value="{x:Null}">
                             <Setter TargetName="contentPresenter" Property="Visibility" Value="Visible" />
                         </Trigger>
-                        <Trigger Property="IsSelected" Value="true">
-                            <Setter Property="Foreground" Value="{DynamicResource AccentSelectedColorBrush}" />
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentColorBrush}" />
-                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentColorBrush3}" />
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="true">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentColor4}" />
+                            <Setter TargetName="SelectionEdge" Property="Background" Value="{DynamicResource AccentInteractiveBrush}" />
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsSelected" Value="true" />
                                 <Condition Property="Selector.IsSelectionActive" Value="True" />
                             </MultiTrigger.Conditions>
-                            <Setter Property="Foreground" Value="{DynamicResource BlackBrush}" />
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentColorBrush2}" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
                         </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -89,9 +162,93 @@
                                 <Condition Property="IsSelected" Value="True" />
                             </MultiTrigger.Conditions>
                             <MultiTrigger.Setters>
-                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource GrayBrush7}" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceColor}" />
                             </MultiTrigger.Setters>
                         </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+<!--
+      Grid view column headers. MahApps paints these from its own light-theme
+      brushes and offers no key to override, so on the dark theme the header
+      text came out near-black on near-black and disappeared entirely, with the
+      header band itself staying white. Setting the properties on the header
+      element is the only reliable hook.
+    -->
+    <Style x:Key="ServerGridHeader" TargetType="{x:Type GridViewColumnHeader}">
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SurfaceColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushSoft}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+
+    <!--
+      Checkbox. MahApps 1.4.3 hardcodes the box background, which rendered as a
+      white square on the dark surface. The template is replaced outright rather
+      than fought over with brush overrides that may or may not exist.
+    -->
+    <Style x:Key="UiCheckBox" TargetType="{x:Type CheckBox}">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type CheckBox}">
+                    <Grid Background="Transparent">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border x:Name="Box"
+                                Width="16"
+                                Height="16"
+                                VerticalAlignment="Center"
+                                CornerRadius="3"
+                                BorderThickness="1"
+                                BorderBrush="{DynamicResource TextMutedBrush}"
+                                Background="{DynamicResource SurfaceRaisedBrush}">
+                            <Path x:Name="CheckMark"
+                                  Width="10"
+                                  Height="8"
+                                  Stretch="Uniform"
+                                  Opacity="0"
+                                  Data="M 0,4 L 3.5,7.5 L 10,0"
+                                  Stroke="{DynamicResource IdealForegroundColorBrush}"
+                                  StrokeThickness="2"
+                                  StrokeEndLineCap="Round"
+                                  StrokeStartLineCap="Round" />
+                        </Border>
+
+                        <ContentPresenter Grid.Column="1"
+                                          Margin="8,0,0,0"
+                                          VerticalAlignment="Center"
+                                          TextBlock.Foreground="{TemplateBinding Foreground}"
+                                          TextBlock.FontFamily="{TemplateBinding FontFamily}"
+                                          TextBlock.FontSize="{TemplateBinding FontSize}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Box" Property="Background" Value="{DynamicResource AccentInteractiveBrush}" />
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentInteractiveBrush}" />
+                            <Setter TargetName="CheckMark" Property="Opacity" Value="1" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource TextSecondaryBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

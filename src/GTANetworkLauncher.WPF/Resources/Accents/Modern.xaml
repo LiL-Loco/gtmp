@@ -1,0 +1,88 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:options="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    mc:Ignorable="options">
+
+    <!--
+      =====================================================================
+      REPLACE THIS VALUE - the brand colour of the launcher.
+
+      #16002E is very dark (luminance ~9%). Used as the brand base it is
+      correct for fills and the title bar, but invisible as text, focus ring
+      or selection indicator on a dark surface. The two values below are
+      hue-preserving tints of it (same 269 degree hue, lightened to 66% and
+      78%) and are what interactive states actually use.
+
+      Change BrandAccent here. If you change its hue, recompute the tints.
+      =====================================================================
+    -->
+    <Color x:Key="BrandAccent">#16002E</Color>
+
+    <!-- Interactive tints derived from BrandAccent. Hue 269deg. -->
+    <Color x:Key="AccentInteractive">#A855F7</Color>
+    <Color x:Key="AccentInteractiveHover">#C084FC</Color>
+
+    <!-- The brand base, used for fills.
+         A literal on purpose: Color is a plain struct, not a DependencyObject,
+         so a markup extension as its element content cannot resolve and takes
+         the whole dictionary down with an XamlParseException at startup. -->
+    <Color x:Key="AccentBaseColor">#16002E</Color>
+
+    <SolidColorBrush x:Key="BrandAccentBrush" Color="{StaticResource BrandAccent}" options:Freeze="True" />
+    <SolidColorBrush x:Key="AccentInteractiveBrush" Color="{StaticResource AccentInteractive}" options:Freeze="True" />
+    <SolidColorBrush x:Key="AccentInteractiveHoverBrush" Color="{StaticResource AccentInteractiveHover}" options:Freeze="True" />
+
+    <!--
+      MahApps expects an alpha ladder rather than a ramp of shades.
+      80% / 60% / 40% / 20% of the interactive tint, used for states and overlays.
+    -->
+    <Color x:Key="AccentColor">#CCA855F7</Color>
+    <Color x:Key="AccentColor2">#99A855F7</Color>
+    <Color x:Key="AccentColor3">#66A855F7</Color>
+    <Color x:Key="AccentColor4">#33A855F7</Color>
+
+    <!-- Hover/pressed state. -->
+    <Color x:Key="HighlightColor">#C084FC</Color>
+
+    <SolidColorBrush x:Key="HighlightBrush" Color="{StaticResource HighlightColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="AccentBaseColorBrush" Color="{StaticResource AccentBaseColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="AccentColorBrush" Color="{StaticResource AccentColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="AccentColorBrush2" Color="{StaticResource AccentColor2}" options:Freeze="True" />
+    <SolidColorBrush x:Key="AccentColorBrush3" Color="{StaticResource AccentColor3}" options:Freeze="True" />
+    <SolidColorBrush x:Key="AccentColorBrush4" Color="{StaticResource AccentColor4}" options:Freeze="True" />
+
+    <!--
+      WindowTitleColorBrush deliberately not defined here. It used to point at
+      AccentColor, which painted the whole window chrome in full-saturation
+      violet - louder than everything it was supposed to frame. The title bar is
+      a surface, and surfaces belong to the theme, which is merged after this
+      dictionary and would therefore not be resolvable here anyway.
+      See Resources/Themes/ModernDark.xaml.
+    -->
+
+    <!-- Progress reads as one flat colour. A gradient here was the 2016 tell. -->
+    <SolidColorBrush x:Key="ProgressBrush" Color="{StaticResource AccentColor}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="CheckmarkFill" Color="{StaticResource AccentColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="RightArrowFill" Color="{StaticResource AccentColor}" options:Freeze="True" />
+
+    <!-- Accent used on a dark surface, so the foreground has to go dark, not white. -->
+    <Color x:Key="IdealForegroundColor">#0D0F12</Color>
+    <SolidColorBrush x:Key="IdealForegroundColorBrush" Color="{StaticResource IdealForegroundColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="IdealForegroundDisabledBrush" Color="{StaticResource IdealForegroundColor}" Opacity="0.4" options:Freeze="True" />
+    <SolidColorBrush x:Key="AccentSelectedColorBrush" Color="{StaticResource IdealForegroundColor}" options:Freeze="True" />
+
+    <!-- DataGrid brushes -->
+    <SolidColorBrush x:Key="MetroDataGrid.HighlightBrush" Color="{StaticResource AccentColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MetroDataGrid.HighlightTextBrush" Color="{StaticResource IdealForegroundColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MetroDataGrid.MouseOverHighlightBrush" Color="{StaticResource AccentColor3}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MetroDataGrid.FocusBorderBrush" Color="{StaticResource AccentColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MetroDataGrid.InactiveSelectionHighlightBrush" Color="{StaticResource AccentColor2}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MetroDataGrid.InactiveSelectionHighlightTextBrush" Color="{StaticResource IdealForegroundColor}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OnSwitchBrush.Win10" Color="{StaticResource AccentColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OnSwitchMouseOverBrush.Win10" Color="{StaticResource AccentColor2}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.ThumbIndicatorCheckedBrush.Win10" Color="{StaticResource IdealForegroundColor}" options:Freeze="True" />
+
+</ResourceDictionary>
