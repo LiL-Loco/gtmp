@@ -46,8 +46,29 @@ namespace GrandTheftMultiplayer.Launcher.Services
 		public static readonly string[] GtaInstallFolderNames =
 		{
 			"Grand Theft Auto V",
+			// Rockstar's own installer sometimes appends the edition name, so a
+			// legacy install can live in "Grand Theft Auto V Legacy". Only the
+			// prefix is reliable, which is why discovery also reads the registry.
+			"Grand Theft Auto V Legacy",
 			"Grand Theft Auto V Enhanced"
 		};
+
+		/// <summary>
+		/// Which edition the launcher should run when several are installed.
+		/// </summary>
+		/// <remarks>
+		/// Both Rockstar editions can be present at once, each with its own folder,
+		/// registry key and profile directory. Without a stated preference the
+		/// launcher simply took whichever it found first, and once that path was
+		/// written to settings.xml it stuck there - so installing the legacy edition
+		/// later changed nothing until the setting was edited by hand.
+		/// <para>
+		/// Set this to "enhanced" to prefer GTA5_Enhanced.exe instead. It only
+		/// affects which installation is selected; both remain launchable by
+		/// clearing GamePath in settings.xml.
+		/// </para>
+		/// </remarks>
+		public const string PreferredGtaEdition = "legacy";
 
 		public const string SteamApiDllFileName = "steam_api64.dll";
 		public const string ServerExeFileName = "GrandTheftMultiplayer.Server.exe";

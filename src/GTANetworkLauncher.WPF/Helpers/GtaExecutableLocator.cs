@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using GrandTheftMultiplayer.Launcher.Services;
 
 namespace GrandTheftMultiplayer.Launcher.Helpers
@@ -23,6 +24,31 @@ namespace GrandTheftMultiplayer.Launcher.Helpers
 	public static class GtaExecutableLocator
 	{
 		/// <summary>
+		/// The executable names in the order they should be probed.
+		/// </summary>
+		/// <remarks>
+		/// Driven by <see cref="Constants.PreferredGtaEdition"/> so that switching
+		/// editions is a one-line change. With the default "legacy", GTA5.exe wins
+		/// whenever both editions are installed.
+		/// </remarks>
+		private static IEnumerable<string> PreferredExecutableNames()
+		{
+			var preferEnhanced = string.Equals(
+				Constants.PreferredGtaEdition, "enhanced", StringComparison.OrdinalIgnoreCase);
+
+			if (preferEnhanced)
+			{
+				for (var i = Constants.GtaExecutableFileNames.Length - 1; i >= 0; i--)
+					yield return Constants.GtaExecutableFileNames[i];
+			}
+			else
+			{
+				foreach (var name in Constants.GtaExecutableFileNames)
+					yield return name;
+			}
+		}
+
+		/// <summary>
 		/// Returns the GTA V executable inside <paramref name="directory"/>, or null.
 		/// </summary>
 		/// <remarks>
@@ -35,7 +61,7 @@ namespace GrandTheftMultiplayer.Launcher.Helpers
 			if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
 				return null;
 
-			foreach (var fileName in Constants.GtaExecutableFileNames)
+			foreach (var fileName in PreferredExecutableNames())
 			{
 				var candidate = Path.Combine(directory, fileName);
 
@@ -44,6 +70,26 @@ namespace GrandTheftMultiplayer.Launcher.Helpers
 			}
 
 			return null;
+		}
+
+		/// <summary>
+		/// True when the directory holds the executable of the preferred edition.
+		/// </summary>
+		/// <remarks>
+		/// Used to notice that a saved path points at the other edition. Without it a
+		/// settings.xml written for the Enhanced edition keeps winning even after
+		/// the legacy edition is installed.
+		/// </remarks>
+		public static bool MatchesPreferredEdition(string directory)
+		{
+			var preferred = FindExecutable(directory);
+
+			if (preferred == null) return false;
+
+			return string.Equals(
+				Path.GetFileName(preferred),
+				PreferredExecutableNames().First(),
+				StringComparison.OrdinalIgnoreCase);
 		}
 
 		/// <summary>True when the directory holds a GTA V executable of either edition.</summary>
@@ -73,15 +119,24 @@ namespace GrandTheftMultiplayer.Launcher.Helpers
 		/// Installation directories to probe, most specific first.
 		/// </summary>
 		/// <remarks>
-		/// Covers the fixed and "Program Files" locations on every drive. The
-		/// registry is queried separately by <see cref="GamePathProvider"/>, which
-		/// knows how Rockstar records the install folder.
+		/// Covers the fixed and "Program Files" locations on every drive. Rockstar
+		/// appends the edition to the folder name ("Grand Theft Auto V Legacy"), so
+		/// the known names are matched by prefix rather than compared exactly.
+		/// The registry is queried separately by <see cref="GamePathProvider"/>,
+		/// which knows how Rockstar records the install folder.
 		/// </remarks>
 		public static IEnumerable<string> CandidateDirectories()
 		{
 			var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-			foreach (var folder in Constants.GtaInstallFolderNames)
+			var folders = Constants.GtaInstallFolderNames.ToList();
+
+			if (string.Equals(Constants.PreferredGtaEdition, "enhanced", StringComparison.OrdinalIgnoreCase))
+			{
+				folders.Reverse();
+			}
+
+			foreach (var folder in folders)
 			{
 				foreach (var root in DriveRoots())
 				{
@@ -110,6 +165,68 @@ namespace GrandTheftMultiplayer.Launcher.Helpers
 
 					if (seen.Add(path))
 						yield return path;
+				}
+			}
+
+			// Prefix sweep. Rockstar picks the folder name itself, so a hardcoded
+			// list is never complete - the legacy build arrived here as
+			// "Grand Theft Auto V Legacy". Anything under a Rockstar Games directory
+			// that actually contains a GTA V executable is a candidate, and matching
+			// on the executable rather than the name keeps this edition-agnostic.
+			foreach (var directory in ScanRockstarDirectories())
+			{
+				if (seen.Add(directory))
+					yield return directory;
+			}
+		}
+
+		/// <summary>
+		/// Every directory under "Rockstar Games" on any drive that holds a GTA V
+		/// executable.
+		/// </summary>
+		private static IEnumerable<string> ScanRockstarDirectories()
+		{
+			foreach (var root in DriveRoots())
+			{
+				foreach (var relative in new[]
+				{
+					@"Program Files\Rockstar Games",
+					@"Program Files (x86)\Rockstar Games"
+				})
+				{
+					string rockstarRoot;
+
+					try
+					{
+						rockstarRoot = Path.Combine(root, relative);
+					}
+					catch (ArgumentException)
+					{
+						continue;
+					}
+
+					if (!Directory.Exists(rockstarRoot)) continue;
+
+					string[] subdirectories;
+
+					try
+					{
+						subdirectories = Directory.GetDirectories(rockstarRoot);
+					}
+					catch (IOException)
+					{
+						continue;
+					}
+					catch (UnauthorizedAccessException)
+					{
+						continue;
+					}
+
+					foreach (var directory in subdirectories)
+					{
+						if (FindExecutable(directory) != null)
+							yield return directory;
+					}
 				}
 			}
 		}

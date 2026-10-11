@@ -29,6 +29,13 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 		private const string RockstarKeyPath = @"SOFTWARE\Wow6432Node\Rockstar Games\Grand Theft Auto V";
 		private const string RockstarInstallValueName = "InstallFolder";
 
+		// The Enhanced edition registers under its own key. Writing the Enhanced
+		// folder into the legacy key was wrong in two ways: it mislabels the
+		// installation for anything reading that key, and it makes
+		// GamePathProvider find the Enhanced copy first, so a machine with both
+		// editions can never settle on the legacy one.
+		private const string RockstarEnhancedKeyPath = @"SOFTWARE\Wow6432Node\Rockstar Games\Grand Theft Auto V Enhanced";
+
 		private const string SteamGameSubFolder = "GTAV";
 
 		private readonly ILogger _logger;
@@ -75,7 +82,29 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 
 		private void EnsureRockstarRegistryValue(string gamePath)
 		{
-			EnsureRegistryValue(RegistryHive.LocalMachine, RockstarKeyPath, RockstarInstallValueName, gamePath);
+			// Pick the key that matches the edition actually in use, rather than
+			// always writing to the legacy one.
+			var isEnhanced = IsEnhancedInstallation(gamePath);
+			var keyPath = isEnhanced ? RockstarEnhancedKeyPath : RockstarKeyPath;
+
+			EnsureRegistryValue(RegistryHive.LocalMachine, keyPath, RockstarInstallValueName, gamePath);
+		}
+
+		/// <summary>
+		/// True when the folder holds the Enhanced executable rather than GTA5.exe.
+		/// </summary>
+		private static bool IsEnhancedInstallation(string gamePath)
+		{
+			foreach (var name in Constants.GtaExecutableFileNames)
+			{
+				if (string.Equals(name, Constants.GTA5ExecutableFileName, StringComparison.OrdinalIgnoreCase))
+					continue;
+
+				if (File.Exists(Path.Combine(gamePath, name)))
+					return true;
+			}
+
+			return false;
 		}
 
 		private void EnsureRegistryValue(RegistryHive hive, string keyPath, string valueName, string expectedPath)

@@ -585,16 +585,31 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 			// the Enhanced one. Probing only "GTA V" made an Enhanced install look
 			// like it had never been started, and the launcher then refused to launch
 			// with a message telling the user to run single player first.
-			var profileFolders = new[]
+			//
+			// The order follows the preferred edition: with both installed the savegame
+			// and settings must go to the same profile the game actually reads, and
+			// writing them into the other edition's folder silently has no effect.
+			var legacyFirst = !string.Equals(Constants.PreferredGtaEdition, "enhanced", StringComparison.OrdinalIgnoreCase);
+
+			var folderNames = new List<string>();
+
+			if (legacyFirst)
 			{
-				Path.Combine(rockstarGamesFolder, @"GTA V\Profiles"),
-				Path.Combine(rockstarGamesFolder, @"GTAV Enhanced\Profiles")
-			};
+				folderNames.Add(@"GTA V");
+				folderNames.Add(@"GTAV Enhanced");
+			}
+			else
+			{
+				folderNames.Add(@"GTAV Enhanced");
+				folderNames.Add(@"GTA V");
+			}
 
 			var profileDirectories = new List<string>();
 
-			foreach (var profilesFolderPath in profileFolders)
+			foreach (var folderName in folderNames)
 			{
+				var profilesFolderPath = Path.Combine(rockstarGamesFolder, Path.Combine(folderName, "Profiles"));
+
 				if (!Directory.Exists(profilesFolderPath)) continue;
 
 				var found = Directory.GetFiles(profilesFolderPath, PcSettingsFileName, SearchOption.AllDirectories);

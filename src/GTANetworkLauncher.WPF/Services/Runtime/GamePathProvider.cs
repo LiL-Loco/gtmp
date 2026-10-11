@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using GrandTheftMultiplayer.Launcher.Helpers;
@@ -25,10 +26,21 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 
 		public string GetGta5DirectoryPath()
 		{
+			// A saved path is only honoured when it holds the preferred edition.
+			// Once it was accepted blindly it became permanent: installing the
+			// legacy edition alongside the Enhanced one changed nothing, because
+			// settings.xml still named the Enhanced folder and it still existed.
 			if (IsValidGtaPath(_settings.GamePath))
 			{
-				_logger.Write($"Valid GTA 5 path in settings: {_settings.GamePath}");
-				return _settings.GamePath;
+				if (GtaExecutableLocator.MatchesPreferredEdition(_settings.GamePath))
+				{
+					_logger.Write($"Valid GTA 5 path in settings: {_settings.GamePath}");
+					return _settings.GamePath;
+				}
+
+				_logger.Write(
+					$"Saved game path {_settings.GamePath} is not the preferred edition " +
+					$"({Constants.PreferredGtaEdition}). Looking for it again.");
 			}
 
 			_settings.GamePath = TryFindGtaPath();
@@ -98,17 +110,17 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 			}
 		}
 
-		private static string FindGtaPath()
+		// Not static: it logs when only the non-preferred edition is present.
+		private string FindGtaPath()
 		{
+			var candidates = new List<string>();
+
 			// Steam
 			const string steamInstallRegistryPath = @"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Rockstar Games\GTAV";
 			const string steamInstallValueName = "InstallFolderSteam";
 
 			var steamInstallPath = Registry.GetValue(steamInstallRegistryPath, steamInstallValueName, null) as string ?? "";
-			var fullInstallPath = steamInstallPath.Replace(@"\GTAV", "");
-
-			if (IsValidGtaPath(fullInstallPath))
-				return fullInstallPath;
+			candidates.Add(steamInstallPath.Replace(@"\GTAV", ""));
 
 			// R* Warehouse. The Enhanced edition registers under its own key and
 			// reports the folder that already ends in "Enhanced", so the value is
@@ -126,16 +138,38 @@ namespace GrandTheftMultiplayer.Launcher.Services.Runtime
 					"InstallFolder",
 					null) as string ?? "";
 
-				if (IsValidGtaPath(installPath))
-					return installPath;
+				candidates.Add(installPath);
 			}
 
 			// Fallback: probe the fixed install locations. Rockstar does not always
 			// write the registry key, for example on a fresh Enhanced-only install.
-			foreach (var candidate in GtaExecutableLocator.CandidateDirectories())
+			candidates.AddRange(GtaExecutableLocator.CandidateDirectories());
+
+			// Two passes, and the order matters. A registry value can name a folder
+			// that exists but holds the other edition - which is exactly what
+			// happened when the launcher wrote the Enhanced folder into the legacy
+			// key. Accepting that on the first pass would pin the launcher to the
+			// wrong installation forever.
+			string preferred = null;
+			string fallback = null;
+
+			foreach (var candidate in candidates)
 			{
-				if (IsValidGtaPath(candidate))
+				if (!IsValidGtaPath(candidate)) continue;
+
+				if (GtaExecutableLocator.MatchesPreferredEdition(candidate))
 					return candidate;
+
+				if (fallback == null) fallback = candidate;
+			}
+
+			if (fallback != null)
+			{
+				_logger.Write(
+					$"Only the non-preferred GTA edition ({Constants.PreferredGtaEdition} not installed) " +
+					$"was found at {fallback}.");
+
+				return fallback;
 			}
 
 			return null;
