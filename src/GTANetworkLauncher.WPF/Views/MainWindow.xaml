@@ -25,15 +25,6 @@
                       Loaded="OnLoaded">
     <controls:MetroWindow.Resources>
 
-        <Style TargetType="controls:ToggleSwitch">
-            <Setter Property="Margin"
-                    Value="10 10 5 10" />
-            <Setter Property="OnLabel"
-                    Value="" />
-            <Setter Property="OffLabel"
-                    Value="" />
-        </Style>
-
         <Style x:Key="SubHeaderTextStyle"
                TargetType="Label">
             <Setter Property="FontFamily"
@@ -461,7 +452,7 @@
                                                 </Rectangle>
                                             </controls:TextBoxHelper.ButtonContent>
                                         </TextBox>
-                                        <!--<controls:ToggleSwitch TextOptions.TextHintingMode="Fixed"
+                                        <!--<controls:ToggleSwitch Style="{StaticResource UiToggleSwitch}" TextOptions.TextHintingMode="Fixed"
                                                            Header="Theme"
                                                            IsChecked="{Binding Settings.DarkTheme}"
                                                            OffLabel="Light"
@@ -474,28 +465,28 @@
                                               Grid.Column="2"
                                               Grid.Row="0">
                                     <StackPanel Orientation="Vertical">
-                                        <controls:ToggleSwitch OnLabel="Rockstar Editor"
+                                        <controls:ToggleSwitch Style="{StaticResource UiToggleSwitch}" OnLabel="Rockstar Editor"
                                                                OffLabel="Rockstar Editor"
                                                                IsChecked="{Binding Settings.DisableRockstarEditor}" />
-                                        <controls:ToggleSwitch OnLabel="Display Game Framerate"
+                                        <controls:ToggleSwitch Style="{StaticResource UiToggleSwitch}" OnLabel="Display Game Framerate"
                                                                OffLabel="Display Game Framerate"
                                                                IsChecked="{Binding Settings.ShowFPS}" />
-                                        <controls:ToggleSwitch OnLabel="CEF Media Stream"
+                                        <controls:ToggleSwitch Style="{StaticResource UiToggleSwitch}" OnLabel="CEF Media Stream"
                                                                OffLabel="CEF Media Stream"
                                                                IsChecked="{Binding Settings.MediaStream}" />
-                                        <controls:ToggleSwitch OnLabel="Show Timestamp"
+                                        <controls:ToggleSwitch Style="{StaticResource UiToggleSwitch}" OnLabel="Show Timestamp"
                                                                OffLabel="Show Timestamp"
                                                                IsChecked="{Binding Settings.Timestamp}" />
-                                        <controls:ToggleSwitch OnLabel="Use Military Time"
+                                        <controls:ToggleSwitch Style="{StaticResource UiToggleSwitch}" OnLabel="Use Military Time"
                                                                OffLabel="Use Military Time"
                                                                IsChecked="{Binding Settings.Militarytime}" />
-                                        <controls:ToggleSwitch OnLabel="Use Classic Chat"
+                                        <controls:ToggleSwitch Style="{StaticResource UiToggleSwitch}" OnLabel="Use Classic Chat"
                                                                OffLabel="Use Classic Chat"
                                                                IsChecked="{Binding Settings.UseClassicChat}" />
-                                        <controls:ToggleSwitch OnLabel="Disable Chromium Embedded Framework (CEF)"
+                                        <controls:ToggleSwitch Style="{StaticResource UiToggleSwitch}" OnLabel="Disable Chromium Embedded Framework (CEF)"
                                                                OffLabel="Disable Chromium Embedded Framework (CEF)"
                                                                IsChecked="{Binding Settings.DisableCEF}" />
-                                        <controls:ToggleSwitch OnLabel="Check and ask to back up game on launch"
+                                        <controls:ToggleSwitch Style="{StaticResource UiToggleSwitch}" OnLabel="Check and ask to back up game on launch"
                                                                OffLabel="Check and ask to back up game on launch"
                                                                IsChecked="{Binding Settings.AskToBackUpGame}" />
                                     </StackPanel>

@@ -130,13 +130,18 @@
     <SolidColorBrush x:Key="MetroDataGridColumnHeaderForegroundBrush" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
     <SolidColorBrush x:Key="MetroDataGridColumnHeaderBackgroundBrush" Color="{StaticResource SurfaceColor}" options:Freeze="True" />
 
-    <!-- ToggleSwitch -->
+    <!-- ToggleSwitch. The off state needs a light outline, not just a fill:
+         the control fills the whole track with OffSwitchBrush and draws only a
+         1px border, so a dark fill plus a dark border is what made the
+         switches read as black holes on this background. Fill stays dark,
+         outline carries the contrast. -->
     <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.PressedBrush.Win10" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
-    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OffBorderBrush.Win10" Color="{StaticResource BorderColor}" options:Freeze="True" />
-    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OffMouseOverBorderBrush.Win10" Color="{StaticResource TextMutedColor}" options:Freeze="True" />
-    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OffDisabledBorderBrush.Win10" Color="{StaticResource BorderColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OffSwitchBrush.Win10" Color="{StaticResource SurfaceRaisedColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OffBorderBrush.Win10" Color="{StaticResource TextMutedColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OffMouseOverBorderBrush.Win10" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OffDisabledBorderBrush.Win10" Color="{StaticResource TextMutedColor}" options:Freeze="True" />
     <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OnSwitchDisabledBrush.Win10" Color="{StaticResource AccentColor3}" options:Freeze="True" />
-    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.ThumbIndicatorBrush.Win10" Color="{StaticResource TextSecondaryColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.ThumbIndicatorBrush.Win10" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
     <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.ThumbIndicatorMouseOverBrush.Win10" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
     <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.ThumbIndicatorPressedBrush.Win10" Color="{StaticResource TextPrimaryColor}" options:Freeze="True" />
     <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.ThumbIndicatorDisabledBrush.Win10" Color="{StaticResource TextMutedColor}" options:Freeze="True" />
